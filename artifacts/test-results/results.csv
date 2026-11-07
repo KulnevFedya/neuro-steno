@@ -59,3 +59,6 @@ test_id,timestamp_utc,commit,file_name,duration_seconds,lang,num_speakers,wer,we
 2026-11-07T09:49:32Z_ru_meeting_3spk_noisy,2026-11-07T09:49:32Z,f01ed93,ru_meeting_3spk_noisy.wav,29.1,ru,3,0.1695,0.0678,0.1249,406.0,0.086,emulator-arm64,phase4 final release (FGS+UX)
 2026-11-07T09:49:45Z_en_call_2spk,2026-11-07T09:49:45Z,f01ed93,en_call_2spk.wav,20.2,en,2,0.1273,0.0526,0.0266,32.0,0.179,emulator-arm64,phase4 final release EN whisper base.en
 2026-11-07T09:49:45Z_en_call_2spk_noisy,2026-11-07T09:49:45Z,f01ed93,en_call_2spk_noisy.wav,20.2,en,2,0.2,0.1053,0.0423,52.0,0.131,emulator-arm64,phase4 final release EN whisper base.en
+2026-11-07T10:25:20Z_real_ru_2spk,2026-11-07T10:25:20Z,3c28083,real_ru_2spk.wav,102.3,ru,2,0.2938,0.0667,0.2889,594.0,0.756,emulator,real voices sova
+2026-11-07T10:25:20Z_real_ru_3spk,2026-11-07T10:25:20Z,3c28083,real_ru_3spk.wav,130.0,ru,3,0.321,0.1265,0.4153,757.0,0.7,emulator,real voices sova
+2026-11-07T10:28:40Z_real_en_ami,2026-11-07T10:28:40Z,3c28083,real_en_ami.wav,150.4,en,4,0.7241,0.6414,0.4419,6842.0,1.202,emulator,real voices AMI sdm

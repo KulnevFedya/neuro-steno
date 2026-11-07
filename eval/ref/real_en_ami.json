@@ -1,0 +1,460 @@
+{
+ "transcript": [
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 0,
+   "end_ms": 1370,
+   "text": "No."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 20,
+   "end_ms": 920,
+   "text": "No okay."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 920,
+   "end_ms": 1930,
+   "text": "Alright."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 1370,
+   "end_ms": 3800,
+   "text": "After the weekend."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 1930,
+   "end_ms": 3410,
+   "text": "Alright yeah okay."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 3410,
+   "end_ms": 4630,
+   "text": "Right."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 3800,
+   "end_ms": 7440,
+   "text": "Weekend was out."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 4630,
+   "end_ms": 6360,
+   "text": "Okay cool."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 6360,
+   "end_ms": 14600,
+   "text": "Um yeah so if you although there's stuff out there that actually I'm gonna try and minimise the amount of changes I make to m. browser anyways."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 14600,
+   "end_ms": 15300,
+   "text": "Shouldn't um."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 16590,
+   "end_ms": 17420,
+   "text": "Shouldn't be an issue."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 17420,
+   "end_ms": 20760,
+   "text": "Actually just to clarify last week when we were talking about our search results."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 20760,
+   "end_ms": 25230,
+   "text": "Um like if we have topics as well as transcripts as well as what was the other."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 25230,
+   "end_ms": 26080,
+   "text": "Summaries."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 26080,
+   "end_ms": 29960,
+   "text": "Um do we want separate result panes uh for each of those."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 29960,
+   "end_ms": 35860,
+   "text": "Or do we want them all in one pane with like an icon or a different colour or something to indicate what type of result they are."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 35860,
+   "end_ms": 39650,
+   "text": "So that when they you know click on that it's gonna go to the relevant thing."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 39650,
+   "end_ms": 44920,
+   "text": "Like just if they check all three say topics summaries blah blah blah have three different windows come up."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 42380,
+   "end_ms": 43440,
+   "text": "Mm-hmm yeah yeah."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 46420,
+   "end_ms": 48530,
+   "text": "Or three like sub sub panes sort of."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 47070,
+   "end_ms": 51210,
+   "text": "Well at the moment is there at the moment is there a window that comes up."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 51210,
+   "end_ms": 53290,
+   "text": "Or is that a r a second results pane."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 52080,
+   "end_ms": 52690,
+   "text": "Um."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 53290,
+   "end_ms": 55740,
+   "text": "Or is there you know does the window get larger."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 55330,
+   "end_ms": 62270,
+   "text": "What um I thought what we sorta discussed last week was to have it sort um the same window."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 55740,
+   "end_ms": 58390,
+   "text": "What's there kind of what are you thinking."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 62270,
+   "end_ms": 65400,
+   "text": "Um so it'll be on the search window bottom half of the search window."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 64740,
+   "end_ms": 65100,
+   "text": "Mm-hmm."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 65400,
+   "end_ms": 69790,
+   "text": "Um I don't know if we still wanna keep it that way but that's uh that's what I was gonna be working."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 69570,
+   "end_ms": 69950,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 69790,
+   "end_ms": 72960,
+   "text": "So so it's just like you click those and it's just loads up."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 72960,
+   "end_ms": 77490,
+   "text": "You know splits that thing into like two or three or whatever that is."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 73430,
+   "end_ms": 74440,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 74440,
+   "end_ms": 74800,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 77020,
+   "end_ms": 77600,
+   "text": "Um."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 77490,
+   "end_ms": 78780,
+   "text": "One two or three depending on which ones you check."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 78780,
+   "end_ms": 83600,
+   "text": "And then um so if we wanna do it that way you know like it probably doesn't matter too much."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 83600,
+   "end_ms": 87400,
+   "text": "Just trying to think if there's gonna be any other issues down the road um depending on."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 85050,
+   "end_ms": 85640,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 87340,
+   "end_ms": 89360,
+   "text": "What have th th uh you confuse me."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 89360,
+   "end_ms": 93410,
+   "text": "Do you have um three separate windows for the three separate different types of results."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 93070,
+   "end_ms": 99030,
+   "text": "No just just panes just result panes for each of the three no no no no no."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 95150,
+   "end_ms": 98280,
+   "text": "Okay not not three different okay okay cool."
+  },
+  {
+   "speaker_id": "speaker_4",
+   "start_ms": 97030,
+   "end_ms": 101190,
+   "text": "Pop ups."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 98280,
+   "end_ms": 98800,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 98800,
+   "end_ms": 99740,
+   "text": "Okay."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 99030,
+   "end_ms": 99970,
+   "text": "No no."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 99740,
+   "end_ms": 100230,
+   "text": "Right yep."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 99970,
+   "end_ms": 103530,
+   "text": "So so it's just when we click you know topics and summaries for what we wanna search."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 102640,
+   "end_ms": 102790,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 103530,
+   "end_ms": 107060,
+   "text": "Then it'll uh you know there'll be two result panes."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 106260,
+   "end_ms": 106980,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 106980,
+   "end_ms": 107930,
+   "text": "Or tabs or something."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 107060,
+   "end_ms": 109610,
+   "text": "So for one for topics one for I don't not really tabs."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 108990,
+   "end_ms": 111770,
+   "text": "Yeah I quite like the idea of a tab in that case."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 109610,
+   "end_ms": 114260,
+   "text": "Um but then you can't see all of them at the same time and it's just like."
+  },
+  {
+   "speaker_id": "speaker_4",
+   "start_ms": 112490,
+   "end_ms": 113560,
+   "text": "All of them no."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 113490,
+   "end_ms": 118480,
+   "text": "But you wouldn't want to compare the result the topic one topic result with one summary result would you."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 117970,
+   "end_ms": 122770,
+   "text": "Well it's no but the thing is if you're looking if you could check them both um you wanna see all the results."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 121470,
+   "end_ms": 123250,
+   "text": "Actually mm yeah."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 123250,
+   "end_ms": 126620,
+   "text": "Especially if you get if you get results for the same meeting."
+  },
+  {
+   "speaker_id": "speaker_3",
+   "start_ms": 123330,
+   "end_ms": 124550,
+   "text": "Yeah yeah it's three panes."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 126720,
+   "end_ms": 127760,
+   "text": "Yeah exactly."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 127760,
+   "end_ms": 128080,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 127860,
+   "end_ms": 129110,
+   "text": "Maybe yeah yeah."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 128080,
+   "end_ms": 138140,
+   "text": "So the summary and the topic and the transcript are um so um or we could just put them all into one result pane on that same window and just indicate."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 129110,
+   "end_ms": 130520,
+   "text": "Yeah yeah it's true."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 135740,
+   "end_ms": 137070,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 137070,
+   "end_ms": 139860,
+   "text": "I mean we could we could order them by meeting for example."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 139860,
+   "end_ms": 140800,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 140800,
+   "end_ms": 141140,
+   "text": "Yeah."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 141140,
+   "end_ms": 145820,
+   "text": "Oh yeah I guess that was the other thing whether we wanna have this reorder by columns and all that."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 143400,
+   "end_ms": 144800,
+   "text": "How to order it."
+  },
+  {
+   "speaker_id": "speaker_1",
+   "start_ms": 144800,
+   "end_ms": 149910,
+   "text": "Yeah well I mean uh if you know that's uh you even a second step the first question is do we want to order them."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 145820,
+   "end_ms": 147270,
+   "text": "But that's a hassle too."
+  },
+  {
+   "speaker_id": "speaker_2",
+   "start_ms": 147270,
+   "end_ms": 147900,
+   "text": "It's a lot of work."
+  }
+ ]
+}

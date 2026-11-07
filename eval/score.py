@@ -144,7 +144,7 @@ def main():
             dur = round(meta["audio_ms"] / 1000, 1)
         row = dict(
             test_id=f"{now}_{name}", timestamp_utc=now, commit=a.commit, file_name=name + ".wav",
-            duration_seconds=dur, lang=name[:2], num_speakers=len({u["speaker_id"] for u in ref}),
+            duration_seconds=dur, lang="ru" if any(re.search("[а-яА-ЯёЁ]", u["text"]) for u in ref) else "en", num_speakers=len({u["speaker_id"] for u in ref}),
             wer=round(wer(ref, hyp, norm_punct), 4), wer_no_punct=round(wer(ref, hyp, norm_plain), 4),
             der=round(der(ref, hyp), 4), ts_error_ms=round(ts_error(ref, hyp), 0),
             rtf=round(meta["rtf"], 3) if "rtf" in meta else "", device=a.device, notes=a.notes,
