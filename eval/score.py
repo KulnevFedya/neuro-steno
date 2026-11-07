@@ -3,6 +3,7 @@
 
 Для каждого <name>.json в out_dir ищет <name>.json в ref_dir. Метрики:
   wer          — слова с пунктуацией и регистром (ё=е), токены по пробелам
+  (числа → слова с обеих сторон, num2words)
   wer_no_punct — без пунктуации, нижний регистр, ё=е
   der          — покадровая (10 мс), спикеры сопоставлены перебором перестановок
   ts_error_ms  — средняя |Δstart|,|Δend| по эталонным репликам (против перекрывающихся гипотез)
@@ -23,12 +24,36 @@ def load(p):
         return json.load(f)["transcript"]
 
 
+MONTHS = "января февраля марта апреля мая июня июля августа сентября октября ноября декабря".split()
+UNITS = {"%": "процентов", "кг": "килограммов", "км": "километров", "м": "метров", "г": "граммов"}
+_NUM = re.compile(r"(\d+)\s*(%|кг|км|м|г)?(?![\w])", re.I)
+_DATE = re.compile(r"(\d+)(\s+(?:%s))" % "|".join(MONTHS), re.I)
+
+
+def numwords(s):
+    """Числа -> слова (ru, для латиницы en) с обеих сторон WER; в приложении не применяется."""
+    from num2words import num2words
+    lang = "ru" if re.search("[а-яА-ЯёЁ]", s) else "en"
+
+    def date(m):
+        return num2words(int(m.group(1)), lang="ru", to="ordinal") .replace("ый", "ого").replace("ий", "ого").replace("ой", "ого") + m.group(2)
+
+    def num(m):
+        w = num2words(int(m.group(1)), lang=lang)
+        u = (m.group(2) or "").lower()
+        return w + (" " + UNITS[u] if u and lang == "ru" else (" " + m.group(2) if u else ""))
+    if lang == "ru":
+        s = _DATE.sub(date, s)
+    return _NUM.sub(num, s)
+
+
 def norm_punct(s):  # с пунктуацией: только ё=е
+    s = numwords(s)
     return re.sub(r"\s+", " ", s.replace("ё", "е").replace("Ё", "Е")).strip()
 
 
 def norm_plain(s):
-    s = s.lower().replace("ё", "е")
+    s = numwords(s).lower().replace("ё", "е")
     s = re.sub(r"[^\w\s]|_", " ", s)
     return re.sub(r"\s+", " ", s).strip()
 
