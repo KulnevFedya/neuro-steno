@@ -19,3 +19,4 @@
 - Модель выдаёт цифры («243», «15%», «7 ноября»), эталон — словами; кандидат на пост-обработку (числа → слова) для WER.
 - Обработка пока в ViewModel-корутине, не в foreground service (TODO); debug-прогон: DebugActivity (только debug) читает/пишет в getExternalFilesDir (`/sdcard/Android/data/<pkg>/files/{in,out}`), вместо /sdcard/Download/steno — нет прав записи без MediaStore.
 - Ресемплер линейный без ФНЧ — для речи достаточно, при необходимости заменить.
+- Eval: числа→слова (num2words) с обеих сторон в score.py, в приложении не трогаем; venv: .venv-eval. Фаза 1 пересчитана: WER_np RU 0.02–0.07, WER RU 0.14–0.21.

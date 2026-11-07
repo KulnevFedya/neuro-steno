@@ -19,4 +19,4 @@ until adb shell "ls $D/out/DONE" >/dev/null 2>&1; do sleep 3; done
 rm -rf "$ROOT/eval/out"; mkdir -p "$ROOT/eval/out"
 adb pull $D/out/. "$ROOT/eval/out/" | tail -1
 adb logcat -d -s STENO | grep -E "RTF|failed" | tail -10 || true
-python3 -I "$ROOT/eval/score.py" "$ROOT/eval/out" "$ROOT/eval/ref" "${@:2}"
+"$ROOT/.venv-eval/bin/python" -I "$ROOT/eval/score.py" "$ROOT/eval/out" "$ROOT/eval/ref" "${@:2}"
