@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Нейро-стенографист</title>
+<meta name="description" content="Офлайн-расшифровка диалогов на Android: распознавание речи, разделение говорящих, таймкоды, локальная LLM.">
+<style>
+:root {
+  --bg: #fbf8fd; --surface: #ffffff; --surface-2: #f1ecf6; --text: #1c1a22; --muted: #5f5a69;
+  --accent: #5b46a3; --accent-text: #ffffff; --line: #e2dcea;
+  --s1: #1f6fd1; --s2: #c62828; --s3: #2e7d32;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131118; --surface: #1c1a22; --surface-2: #26232e; --text: #ece8f2; --muted: #a49fae;
+    --accent: #b9a7ff; --accent-text: #1b1430; --line: #34303d;
+    --s1: #7fb2f5; --s2: #f08a8a; --s3: #86c98a;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
+header { padding: 56px 0 40px; }
+.tag { color: var(--muted); font-size: 15px; letter-spacing: .02em; }
+h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.08; margin: 10px 0 16px; letter-spacing: -.01em; }
+.lead { font-size: clamp(18px, 2.4vw, 21px); color: var(--muted); max-width: 680px; margin: 0 0 28px; }
+.cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.btn {
+  display: inline-block; padding: 14px 26px; border-radius: 999px; text-decoration: none; font-weight: 600;
+  background: var(--accent); color: var(--accent-text);
+}
+.btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--line); }
+.small { font-size: 14px; color: var(--muted); }
+section { padding: 40px 0; border-top: 1px solid var(--line); }
+h2 { font-size: 26px; margin: 0 0 18px; }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; }
+.card h3 { margin: 0 0 6px; font-size: 17px; }
+.card p { margin: 0; color: var(--muted); font-size: 15px; }
+.problem { max-width: 760px; color: var(--muted); }
+.problem strong { color: var(--text); }
+.metrics { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.metric { background: var(--surface-2); border-radius: 16px; padding: 18px 20px; }
+.metric .v { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.metric .l { color: var(--muted); font-size: 14px; }
+.note { margin-top: 14px; font-size: 14px; color: var(--muted); }
+.shots { display: grid; gap: 16px; grid-template-columns: repeat(4, 1fr); }
+.shots figure { margin: 0; }
+.shots img { width: 100%; height: auto; display: block; border-radius: 18px; border: 1px solid var(--line); }
+.shots figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; text-align: center; }
+@media (max-width: 760px) { .shots { grid-template-columns: repeat(2, 1fr); } }
+pre {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  overflow-x: auto; font-size: 14px; line-height: 1.45; margin: 0;
+}
+.spk1 { color: var(--s1); } .spk2 { color: var(--s2); } .spk3 { color: var(--s3); }
+footer { padding: 32px 0 48px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="tag">Android · офлайн · Nuclear IT Hack</div>
+    <h1>Нейро-стенографист</h1>
+    <p class="lead">Запись разговора превращается в расшифровку прямо на телефоне: кто, когда и что сказал.
+      Без интернета и облачных сервисов: все модели внутри приложения.</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/zzzatoox/neuro-steno/releases/download/v1.0/neuro-steno-v1.0.apk">Скачать APK</a>
+      <a class="btn ghost" href="https://github.com/zzzatoox/neuro-steno">Исходный код</a>
+      <span class="small">v1.0 · ~964 МБ · Android 8.0+, arm64</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>Проблема</h2>
+    <p class="problem">Протоколы совещаний, интервью и звонков пишут вручную или отдают в облачные сервисы.
+      Первое долго, второе часто <strong>нельзя</strong>: запись может содержать служебную информацию,
+      а на объекте может не быть сети. Нужна расшифровка с разделением по говорящим и таймкодами, которая
+      <strong>полностью работает на обычном телефоне</strong>.</p>
+  </section>
+
+  <section>
+    <h2>Возможности</h2>
+    <div class="grid">
+      <div class="card"><h3>Распознавание речи</h3><p>Русский (GigaAM v3) с пунктуацией и заглавными буквами, английский (Whisper). Язык определяется автоматически.</p></div>
+      <div class="card"><h3>Кто говорит</h3><p>Автоматическая диаризация на 2–6 участников или заданное число спикеров. Имена можно переименовать.</p></div>
+      <div class="card"><h3>Таймкоды</h3><p>Начало и конец каждой реплики; тап по реплике проигрывает запись с этого места.</p></div>
+      <div class="card"><h3>Любые файлы</h3><p>Импорт WAV, MP3, M4A, OGG, FLAC, видео — или запись с микрофона в приложении.</p></div>
+      <div class="card"><h3>Экспорт</h3><p>JSON строго по формату задачи, TXT для чтения, резюме — отдельным файлом.</p></div>
+      <div class="card"><h3>Локальная LLM</h3><p>Qwen2.5-0.5B на llama.cpp по кнопке пишет краткое содержание, решения и задачи.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Метрики</h2>
+    <div class="metrics">
+      <div class="metric"><div class="v">4.5%</div><div class="l">WER без пунктуации, русский</div></div>
+      <div class="metric"><div class="v">0.087</div><div class="l">DER (ошибка спикеров), русский</div></div>
+      <div class="metric"><div class="v">0.086</div><div class="l">RTF: минута записи за ~5 с</div></div>
+      <div class="metric"><div class="v">9/9</div><div class="l">язык определён верно</div></div>
+      <div class="metric"><div class="v">30 мин</div><div class="l">запись без ошибок, пик памяти 940 МБ</div></div>
+    </div>
+    <p class="note">Эмулятор Android arm64, 4 ГБ RAM; 6 русских записей (синтетические диалоги и живые голоса SOVA RuDevices),
+      режимы «Авто». Методика и все файлы — в <a href="https://github.com/zzzatoox/neuro-steno/blob/master/docs/TEST_RESULTS.md">TEST_RESULTS.md</a>.</p>
+  </section>
+
+  <section>
+    <h2>Как это выглядит</h2>
+    <div class="shots">
+      <figure><img src="../img/01_main.png" alt="Главный экран: импорт, запись, выбор языка и числа спикеров" loading="lazy"><figcaption>Главный экран</figcaption></figure>
+      <figure><img src="../img/02_processing.png" alt="Обработка с прогрессом" loading="lazy"><figcaption>Обработка</figcaption></figure>
+      <figure><img src="../img/03_transcript.png" alt="Расшифровка с тремя спикерами и таймкодами" loading="lazy"><figcaption>Расшифровка</figcaption></figure>
+      <figure><img src="../img/04_summary.png" alt="Резюме встречи от локальной LLM" loading="lazy"><figcaption>Резюме (LLM)</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Результат — JSON</h2>
+<pre>{
+  "transcript": [
+    { "speaker_id": "<span class="spk1">speaker_1</span>", "start_ms": 400,  "end_ms": 3200,  "text": "Многие забывают, что время с Толстяком летит незаметно." },
+    { "speaker_id": "<span class="spk2">speaker_2</span>", "start_ms": 4300, "end_ms": 6500,  "text": "То я тут же включаю вот этот уровень." },
+    { "speaker_id": "<span class="spk3">speaker_3</span>", "start_ms": 6100, "end_ms": 10500, "text": "Этот уровень. Привет. Как отстирать борщ с рубашки?" }
+  ]
+}</pre>
+  </section>
+
+  <section>
+    <h2>Как пользоваться</h2>
+    <div class="grid">
+      <div class="card"><h3>1. Установите</h3><p>Скачайте APK и разрешите установку из этого источника.</p></div>
+      <div class="card"><h3>2. Импортируйте</h3><p>«Импорт аудио» → файл. Или «Запись» с микрофона.</p></div>
+      <div class="card"><h3>3. Дождитесь</h3><p>Обработка идёт в фоне; приложение можно свернуть.</p></div>
+      <div class="card"><h3>4. Экспортируйте</h3><p>«JSON» или «TXT» → выберите папку, например Downloads.</p></div>
+    </div>
+    <p class="cta" style="margin-top:24px">
+      <a class="btn" href="https://github.com/zzzatoox/neuro-steno/releases/download/v1.0/neuro-steno-v1.0.apk">Скачать APK</a>
+    </p>
+  </section>
+
+  <footer>
+    sherpa-onnx · GigaAM v3 · Whisper · pyannote · TitaNet · Silero VAD · llama.cpp · Qwen2.5.
+    Ограничения — в <a href="https://github.com/zzzatoox/neuro-steno/blob/master/docs/LIMITATIONS.md">LIMITATIONS.md</a>.
+  </footer>
+</div>
+</body>
+</html>
