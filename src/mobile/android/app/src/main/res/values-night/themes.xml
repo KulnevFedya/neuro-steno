@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Steno" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#FF151312</item>
+    </style>
+</resources>

@@ -12,7 +12,9 @@
         android:allowBackup="false"
         android:label="Нейро-стенографист"
         android:largeHeap="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:theme="@style/Theme.Steno">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

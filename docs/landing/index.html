@@ -4,30 +4,37 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Нейро-стенографист</title>
-<meta name="description" content="Офлайн-расшифровка диалогов на Android: распознавание речи, разделение говорящих, таймкоды, локальная LLM.">
+<meta name="description" content="Расшифровка диалогов на Android: распознавание речи, разделение говорящих, таймкоды, локальная LLM.">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
 <style>
 :root {
-  --bg: #fbf8fd; --surface: #ffffff; --surface-2: #f1ecf6; --text: #1c1a22; --muted: #5f5a69;
-  --accent: #5b46a3; --accent-text: #ffffff; --line: #e2dcea;
-  --s1: #1f6fd1; --s2: #c62828; --s3: #2e7d32;
+  --bg: #fbf8f6; --surface: #ffffff; --surface-2: #f0ebe8; --text: #1d1b1a; --muted: #5a5350;
+  --accent: #4a3ab8; --accent-text: #ffffff; --line: #e4dfdc;
+  --s1: #4338ca; --s2: #b4372a; --s3: #00796b;
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #131118; --surface: #1c1a22; --surface-2: #26232e; --text: #ece8f2; --muted: #a49fae;
-    --accent: #b9a7ff; --accent-text: #1b1430; --line: #34303d;
-    --s1: #7fb2f5; --s2: #f08a8a; --s3: #86c98a;
+    --bg: #151312; --surface: #1d1b1a; --surface-2: #2c2928; --text: #e9e2de; --muted: #b5ada8;
+    --accent: #c6bfff; --accent-text: #261a80; --line: #373433;
+    --s1: #a5b4fc; --s2: #ffb4a6; --s3: #5edbc8;
   }
 }
+@font-face { font-family: "Unbounded"; font-weight: 700; font-display: swap; src: url(fonts/unbounded_bold.ttf) format("truetype"); }
+@font-face { font-family: "Manrope"; font-weight: 400; font-display: swap; src: url(fonts/manrope_regular.ttf) format("truetype"); }
+@font-face { font-family: "Manrope"; font-weight: 600; font-display: swap; src: url(fonts/manrope_semibold.ttf) format("truetype"); }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
-  font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: 17px/1.55 "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 .wrap { max-width: 1040px; margin: 0 auto; padding: 0 16px; }
 header { padding: 56px 0 40px; }
 .tag { color: var(--muted); font-size: 15px; letter-spacing: .02em; }
-h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.08; margin: 10px 0 16px; letter-spacing: -.01em; }
+h1, h2 { font-family: "Unbounded", -apple-system, "Segoe UI", Roboto, sans-serif; font-weight: 700; }
+h1 { font-size: clamp(30px, 6vw, 52px); line-height: 1.1; margin: 14px 0 16px; overflow-wrap: anywhere; }
+.logo { width: 64px; height: 64px; display: block; }
+.shots-title { font-size: 15px; color: var(--muted); margin: 22px 0 12px; font-weight: 600; }
 .lead { font-size: clamp(18px, 2.4vw, 21px); color: var(--muted); max-width: 680px; margin: 0 0 28px; }
 .cta { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
 .btn {
@@ -39,7 +46,7 @@ h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.08; margin: 10px 0 16px; 
 section { padding: 40px 0; border-top: 1px solid var(--line); }
 h2 { font-size: 26px; margin: 0 0 18px; }
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px 20px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 18px 20px; }
 .card h3 { margin: 0 0 6px; font-size: 17px; }
 .card p { margin: 0; color: var(--muted); font-size: 15px; }
 .problem { max-width: 760px; color: var(--muted); }
@@ -66,10 +73,10 @@ a { color: var(--accent); }
 <body>
 <div class="wrap">
   <header>
-    <div class="tag">Android · офлайн · Nuclear IT Hack</div>
+    <img class="logo" src="icon.svg" alt="">
     <h1>Нейро-стенографист</h1>
     <p class="lead">Запись разговора превращается в расшифровку прямо на телефоне: кто, когда и что сказал.
-      Без интернета и облачных сервисов: все модели внутри приложения.</p>
+      Android-приложение для Nuclear IT Hack.</p>
     <div class="cta">
       <a class="btn" href="https://github.com/zzzatoox/neuro-steno/releases/download/v1.0/neuro-steno-v1.0.apk">Скачать APK</a>
       <a class="btn ghost" href="https://github.com/zzzatoox/neuro-steno">Исходный код</a>
@@ -93,6 +100,7 @@ a { color: var(--accent); }
       <div class="card"><h3>Таймкоды</h3><p>Начало и конец каждой реплики; тап по реплике проигрывает запись с этого места.</p></div>
       <div class="card"><h3>Любые файлы</h3><p>Импорт WAV, MP3, M4A, OGG, FLAC, видео — или запись с микрофона в приложении.</p></div>
       <div class="card"><h3>Экспорт</h3><p>JSON строго по формату задачи, TXT для чтения, резюме — отдельным файлом.</p></div>
+      <div class="card"><h3>Работает без сети</h3><p>Все модели встроены в APK, обработка идёт на процессоре телефона. Записи никуда не отправляются, приложение не запрашивает доступ в интернет.</p></div>
       <div class="card"><h3>Локальная LLM</h3><p>Qwen2.5-0.5B на llama.cpp по кнопке пишет краткое содержание, решения и задачи.</p></div>
     </div>
   </section>
@@ -112,11 +120,19 @@ a { color: var(--accent); }
 
   <section>
     <h2>Как это выглядит</h2>
+    <div class="shots-title">Светлая тема</div>
     <div class="shots">
       <figure><img src="../img/01_main.png" alt="Главный экран: импорт, запись, выбор языка и числа спикеров" loading="lazy"><figcaption>Главный экран</figcaption></figure>
-      <figure><img src="../img/02_processing.png" alt="Обработка с прогрессом" loading="lazy"><figcaption>Обработка</figcaption></figure>
-      <figure><img src="../img/03_transcript.png" alt="Расшифровка с тремя спикерами и таймкодами" loading="lazy"><figcaption>Расшифровка</figcaption></figure>
+      <figure><img src="../img/02_processing.png" alt="Обработка: этапы, прогресс и оставшееся время" loading="lazy"><figcaption>Обработка</figcaption></figure>
+      <figure><img src="../img/03_transcript.png" alt="Расшифровка в виде чата: спикеры, таймкоды, плеер" loading="lazy"><figcaption>Расшифровка</figcaption></figure>
       <figure><img src="../img/04_summary.png" alt="Резюме встречи от локальной LLM" loading="lazy"><figcaption>Резюме (LLM)</figcaption></figure>
+    </div>
+    <div class="shots-title">Тёмная тема</div>
+    <div class="shots">
+      <figure><img src="../img/01_main_dark.png" alt="Главный экран: импорт, запись, выбор языка и числа спикеров" loading="lazy"><figcaption>Главный экран</figcaption></figure>
+      <figure><img src="../img/02_processing_dark.png" alt="Обработка: этапы, прогресс и оставшееся время" loading="lazy"><figcaption>Обработка</figcaption></figure>
+      <figure><img src="../img/03_transcript_dark.png" alt="Расшифровка в виде чата: спикеры, таймкоды, плеер" loading="lazy"><figcaption>Расшифровка</figcaption></figure>
+      <figure><img src="../img/04_summary_dark.png" alt="Резюме встречи от локальной LLM" loading="lazy"><figcaption>Резюме (LLM)</figcaption></figure>
     </div>
   </section>
 

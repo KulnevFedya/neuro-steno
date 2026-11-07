@@ -67,6 +67,13 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             .putExtra(ProcessingService.EXTRA_LANG, AppState.value.lang))
     }
 
+    /** «Новая расшифровка»: вернуться на стартовый экран (настройки языка и спикеров сохраняются). */
+    fun newTranscript() {
+        if (AppState.value.working || _rec.value.recording) return
+        player.release()
+        AppState.update { UiState(numSpeakers = it.numSpeakers, lang = it.lang) }
+    }
+
     // ---- запись с микрофона ----
 
     fun startRecording() {

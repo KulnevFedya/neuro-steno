@@ -29,6 +29,7 @@ flowchart TD
 | Файл | Роль |
 |---|---|
 | `MainActivity.kt`, `MainViewModel.kt`, `AppState.kt` | Compose UI, состояние (синглтон, переживает пересоздание Activity) |
+| `Theme.kt`, `res/` | тема Material 3 (свои светлая/тёмная палитры, 6 цветов спикеров, шрифты Unbounded/Manrope), adaptive icon |
 | `ProcessingService.kt` | foreground service: расшифровка, резюме, пакетный eval; уведомление с прогрессом |
 | `AudioDecoder.kt`, `PcmStore.kt` | декодирование любого формата Android в 16 кГц mono, PCM во временном файле |
 | `Models.kt` | загрузка/выгрузка моделей sherpa-onnx (фоном при старте), LID, смена языка |
@@ -86,7 +87,7 @@ flowchart TD
   с `armv8.2-a+dotprod`, Q4_0 как самый быстрый формат на ARM.
 
 ## Зависимости
-sherpa-onnx 2.0.1 (AAR, `app/libs`), llama.cpp (git submodule, b12183), Jetpack Compose (Material 3), AndroidX Core.
+sherpa-onnx 2.0.1 (AAR, `app/libs`), llama.cpp (git submodule, b12183), Jetpack Compose (Material 3), AndroidX Core. Шрифты Unbounded и Manrope (OFL 1.1) — [LICENSES-fonts.md](LICENSES-fonts.md).
 
 ## Безопасность и приватность
 Обработка только на устройстве, сетевых запросов нет, разрешение INTERNET не запрашивается. Аудио
