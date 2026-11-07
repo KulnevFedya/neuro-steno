@@ -25,7 +25,9 @@ class DebugActivity : Activity() {
         val input = File(intent.getStringExtra("in") ?: File(base, "in").path)
         val files = if (input.isDirectory) (input.listFiles() ?: emptyArray()).filter { it.isFile }.sortedBy { it.name } else listOf(input)
         val spk = intent.getIntExtra("spk", -1)
+        Models.preload(applicationContext)
         thread {
+            Models.await(applicationContext) // как в приложении: модели уже загружены к нажатию «Запуск»
             for (f in files) {
                 try {
                     val r = Transcriber(applicationContext).run(Uri.fromFile(f), spk)

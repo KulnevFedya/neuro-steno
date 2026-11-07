@@ -1,25 +1,12 @@
 package com.nuclearhack.steno
 
 import android.content.Context
-import android.content.res.AssetManager
 import android.net.Uri
-import java.io.File
 import android.os.SystemClock
 import android.util.Log
-import com.k2fsa.sherpa.onnx.FeatureConfig
-import com.k2fsa.sherpa.onnx.OfflineModelConfig
-import com.k2fsa.sherpa.onnx.FastClusteringConfig
-import com.k2fsa.sherpa.onnx.OfflineSpeakerDiarization
-import com.k2fsa.sherpa.onnx.OfflineSpeakerDiarizationConfig
-import com.k2fsa.sherpa.onnx.OfflineSpeakerSegmentationModelConfig
-import com.k2fsa.sherpa.onnx.OfflineSpeakerSegmentationPyannoteModelConfig
-import com.k2fsa.sherpa.onnx.OfflineTransducerModelConfig
-import com.k2fsa.sherpa.onnx.SpeakerEmbeddingExtractorConfig
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
-import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig
-import com.k2fsa.sherpa.onnx.SileroVadModelConfig
 import com.k2fsa.sherpa.onnx.Vad
-import com.k2fsa.sherpa.onnx.VadModelConfig
+import java.io.File
 
 const val TAG = "STENO"
 
@@ -32,51 +19,46 @@ data class TranscribeResult(
     val rtf: Double get() = if (audioMs > 0) decodeAsrMs.toDouble() / audioMs else 0.0
 }
 
-/** Порог кластеризации диаризации (подобран на eval, titanet_small). */
-const val CLUSTER_THRESHOLD = 0.5f
+/** Ожидаемый RTF диаризации — для оценочного прогресса (JNI-колбэк в AAR не работает). */
+private const val EXPECTED_DIAR_RTF = 0.15
 
 /**
- * Файл → декод 16k mono (во временный файл) → диаризация (pyannote-3.0 + titanet) → release →
- * ASR (GigaAM v3 transducer, RU) по сегментам диаризации. speaker_id и таймкоды — из диаризации.
- * [numSpeakers] <= 0 — авто (порог кластеризации).
+ * Файл → декод 16k mono (во временный файл) → диаризация (pyannote-3.0 + titanet) →
+ * ASR (GigaAM v3 transducer, RU) по сегментам диаризации. Модели — из [Models] (грузятся при старте).
+ * speaker_id и таймкоды — из диаризации. [numSpeakers] <= 0 — авто (порог кластеризации).
  */
 class Transcriber(private val context: Context) {
 
     fun run(uri: Uri, numSpeakers: Int = -1, onProgress: (Float) -> Unit = {}): TranscribeResult {
-        val assets = context.assets
         val t0 = SystemClock.elapsedRealtime()
+        Models.await(context)
+        val tModels = SystemClock.elapsedRealtime()
+        if (tModels - t0 > 50) Log.i(TAG, "waited for models ${tModels - t0} ms")
         PcmStore(File(context.cacheDir, "pcm_${System.nanoTime()}.raw")).use { pcm ->
             AudioDecoder.decode(context, uri, { onProgress(it * 0.1f) }) { pcm.append(it) }
             pcm.finish()
             val audioMs = pcm.durationMs
             val tDecode = SystemClock.elapsedRealtime()
-            Log.i(TAG, "decode ${tDecode - t0} ms, audio $audioMs ms")
+            Log.i(TAG, "decode ${tDecode - tModels} ms, audio $audioMs ms")
 
-            // 1. диаризация, затем освобождаем и модель, и PCM-массив
-            val raw = diarize(pcm, numSpeakers) { onProgress(0.1f + it * 0.4f) }
+            val raw = diarize(pcm, numSpeakers, audioMs) { onProgress(0.1f + it * 0.4f) }
             val tDiar = SystemClock.elapsedRealtime()
-            val segs = Segmenter.build(raw)
+            val merged = if (numSpeakers > 0) raw else mergeSmallClusters(pcm, raw)
+            val segs = Segmenter.build(merged)
             val ids = Segmenter.speakerIds(segs)
             Log.i(TAG, "diarization ${tDiar - tDecode} ms, raw=${raw.size} segs=${segs.size} speakers=${ids.size}")
 
-            // 2. ASR по сегментам
             val utterances = ArrayList<Utterance>()
-            val rec = createRecognizer(assets)
-            var vad: Vad? = null
-            try {
-                for ((i, s) in segs.withIndex()) {
-                    val w = Segmenter.padded(s, audioMs)
-                    val text = if (w.last - w.first <= Segmenter.MAX_ASR_MS) {
-                        recognize(rec, pcm.read(w.first, w.last))
-                    } else {
-                        val v = vad ?: createVad(assets).also { vad = it }
-                        recognizeLong(rec, v, pcm.read(w.first, w.last))
-                    }
-                    if (text.isNotBlank()) utterances.add(Utterance(ids.getValue(s.speaker), s.startMs, s.endMs, text))
-                    onProgress(0.5f + 0.5f * (i + 1) / segs.size)
+            val rec = Models.recognizer
+            for ((i, s) in segs.withIndex()) {
+                val w = Segmenter.padded(s, audioMs)
+                val text = if (w.last - w.first <= Segmenter.MAX_ASR_MS) {
+                    recognize(rec, pcm.read(w.first, w.last))
+                } else {
+                    recognizeLong(rec, Models.vadModel, pcm.read(w.first, w.last))
                 }
-            } finally {
-                vad?.release(); rec.release()
+                if (text.isNotBlank()) utterances.add(Utterance(ids.getValue(s.speaker), s.startMs, s.endMs, text))
+                onProgress(0.5f + 0.5f * (i + 1) / segs.size)
             }
             val elapsed = SystemClock.elapsedRealtime() - t0
             val res = TranscribeResult(utterances, audioMs, elapsed, ids.size)
@@ -85,29 +67,54 @@ class Transcriber(private val context: Context) {
         }
     }
 
-    private fun diarize(pcm: PcmStore, numSpeakers: Int, onProgress: (Float) -> Unit): List<Seg> {
-        val sd = OfflineSpeakerDiarization(
-            context.assets,
-            OfflineSpeakerDiarizationConfig(
-                segmentation = OfflineSpeakerSegmentationModelConfig(
-                    pyannote = OfflineSpeakerSegmentationPyannoteModelConfig(model = "models/diar/seg.int8.onnx"),
-                    numThreads = 4,
-                ),
-                embedding = SpeakerEmbeddingExtractorConfig(model = "models/diar/titanet_small.onnx", numThreads = 4),
-                clustering = FastClusteringConfig(numClusters = if (numSpeakers > 0) numSpeakers else -1, threshold = CLUSTER_THRESHOLD),
-                minDurationOn = 0.2f,
-                minDurationOff = 0.5f,
-            ),
-        )
-        try {
-            val samples = pcm.readAll()
-            // processWithCallback в AAR падает в JNI (лямбда Function3 не находит invoke(IIJ)) — берём process()
-            val res = sd.process(samples)
-            onProgress(1f)
-            return res.sortedBy { it.start }.map { Seg((it.start * 1000).toLong(), (it.end * 1000).toLong(), it.speaker) }
-        } finally {
-            sd.release()
+    private fun diarize(pcm: PcmStore, numSpeakers: Int, audioMs: Long, onProgress: (Float) -> Unit): List<Seg> {
+        Models.setClusters(if (numSpeakers > 0) numSpeakers else -1)
+        val samples = pcm.readAll()
+        // processWithCallback в AAR падает в JNI → process() + оценочный прогресс по времени
+        val expectedMs = (audioMs * EXPECTED_DIAR_RTF).coerceAtLeast(1000.0)
+        val start = SystemClock.elapsedRealtime()
+        val ticker = Thread {
+            try {
+                while (true) {
+                    Thread.sleep(300)
+                    onProgress(((SystemClock.elapsedRealtime() - start) / expectedMs).toFloat().coerceAtMost(0.95f))
+                }
+            } catch (_: InterruptedException) {}
+        }.also { it.isDaemon = true; it.start() }
+        val res = try { Models.diarizer.process(samples) } finally { ticker.interrupt() }
+        onProgress(1f)
+        return res.sortedBy { it.start }.map { Seg((it.start * 1000).toLong(), (it.end * 1000).toLong(), it.speaker) }
+    }
+
+    /** Мелкие кластеры (<3% речи или <2 с) → ближайший по косинусу средних эмбеддингов. */
+    private fun mergeSmallClusters(pcm: PcmStore, raw: List<Seg>): List<Seg> {
+        val totals = ClusterMerge.totals(raw)
+        val small = ClusterMerge.small(totals)
+        if (small.isEmpty()) return raw
+        val emb = totals.keys.associateWith { spk -> clusterEmbedding(pcm, raw.filter { it.speaker == spk }) }
+        val map = ClusterMerge.mapping(small, emb)
+        Log.i(TAG, "small clusters merged: $map (totals ms: $totals)")
+        return ClusterMerge.apply(raw, map)
+    }
+
+    /** Средний эмбеддинг по самым длинным сегментам кластера (до ~20 с аудио). */
+    private fun clusterEmbedding(pcm: PcmStore, segs: List<Seg>): FloatArray {
+        val ex = Models.embedder
+        var budget = 20_000L
+        val embs = ArrayList<FloatArray>()
+        for (s in segs.sortedByDescending { it.endMs - it.startMs }) {
+            if (budget <= 0) break
+            val end = minOf(s.endMs, s.startMs + budget)
+            if (end - s.startMs < 400) continue
+            val st = ex.createStream()
+            st.acceptWaveform(pcm.read(s.startMs, end), AudioDecoder.TARGET_RATE)
+            st.inputFinished()
+            if (ex.isReady(st)) embs.add(ex.compute(st))
+            st.release()
+            budget -= end - s.startMs
         }
+        if (embs.isEmpty()) return FloatArray(ex.dim())
+        return FloatArray(embs[0].size) { i -> embs.sumOf { it[i].toDouble() }.toFloat() / embs.size }
     }
 
     /** Сегмент > 30 с: режем Silero VAD внутри. */
@@ -138,39 +145,4 @@ class Transcriber(private val context: Context) {
         s.release()
         return text
     }
-
-    private fun createVad(assets: AssetManager) = Vad(
-        assets,
-        VadModelConfig(
-            sileroVadModelConfig = SileroVadModelConfig(
-                model = "models/silero_vad.onnx",
-                threshold = 0.5f,
-                minSilenceDuration = 0.3f,
-                minSpeechDuration = 0.25f,
-                windowSize = 512,
-                maxSpeechDuration = 25f,
-            ),
-            sampleRate = AudioDecoder.TARGET_RATE,
-            numThreads = 1,
-            provider = "cpu",
-        ),
-    )
-
-    private fun createRecognizer(assets: AssetManager) = OfflineRecognizer(
-        assets,
-        OfflineRecognizerConfig(
-            featConfig = FeatureConfig(sampleRate = AudioDecoder.TARGET_RATE, featureDim = 80),
-            modelConfig = OfflineModelConfig(
-                transducer = OfflineTransducerModelConfig(
-                    encoder = "models/ru/encoder.int8.onnx",
-                    decoder = "models/ru/decoder.onnx",
-                    joiner = "models/ru/joiner.onnx",
-                ),
-                tokens = "models/ru/tokens.txt",
-                modelType = "nemo_transducer",
-                numThreads = 4,
-                provider = "cpu",
-            ),
-        ),
-    )
 }

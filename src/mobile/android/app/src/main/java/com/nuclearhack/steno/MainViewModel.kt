@@ -27,6 +27,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    init { Models.preload(app) }
+
     fun setNumSpeakers(n: Int) { if (!_state.value.busy) _state.value = _state.value.copy(numSpeakers = n) }
 
     fun transcribe(uri: Uri) {
