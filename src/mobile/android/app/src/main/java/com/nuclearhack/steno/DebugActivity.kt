@@ -6,7 +6,7 @@ import android.os.Bundle
 import java.io.File
 
 /**
- * Пакетный прогон для eval (работает и в release):
+ * Пакетный прогон для eval (работает и в release). Защита: android:permission=DUMP — есть у adb shell, сторонним приложениям не выдаётся:
  *   adb shell am start -n com.nuclearhack.steno/.DebugActivity --es in <файл|каталог>
  * Файл *.json (расшифровка) -> только резюме. Резюме после каждого файла: --ez summary true. Число спикеров: --ei spk N (по умолчанию авто). Язык: --es lang auto|ru|en (по умолчанию DEFAULT_LANG).
  * По умолчанию in = <externalFilesDir>/in. Результаты: <externalFilesDir>/out/<имя>.json и <имя>.meta.json, по окончании out/DONE.

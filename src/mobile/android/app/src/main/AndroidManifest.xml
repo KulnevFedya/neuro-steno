@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
@@ -22,7 +23,12 @@
             </intent-filter>
         </activity>
         <!-- пакетный прогон для eval через adb; есть и в release -->
-        <activity android:name=".DebugActivity" android:exported="true" />
+        <!-- eval через adb: exported, но только для владельцев DUMP (adb shell); сторонние приложения его не получают -->
+        <activity
+            android:name=".DebugActivity"
+            android:exported="true"
+            android:permission="android.permission.DUMP"
+            tools:ignore="ProtectedPermissions" />
         <service
             android:name=".ProcessingService"
             android:exported="false"
