@@ -1,0 +1,46 @@
+{
+  "transcript": [
+    {
+      "speaker_id": "speaker_1",
+      "start_ms": 800,
+      "end_ms": 2755,
+      "text": "Hi everyone, can you hear me?"
+    },
+    {
+      "speaker_id": "speaker_2",
+      "start_ms": 3155,
+      "end_ms": 4704,
+      "text": "Yes, loud and clear."
+    },
+    {
+      "speaker_id": "speaker_1",
+      "start_ms": 5154,
+      "end_ms": 8719,
+      "text": "Great. Let's review the release plan for version two point one."
+    },
+    {
+      "speaker_id": "speaker_2",
+      "start_ms": 9119,
+      "end_ms": 11938,
+      "text": "The build is ready, but we still have three open bugs."
+    },
+    {
+      "speaker_id": "speaker_1",
+      "start_ms": 12238,
+      "end_ms": 13758,
+      "text": "Which one is the most critical?"
+    },
+    {
+      "speaker_id": "speaker_2",
+      "start_ms": 14108,
+      "end_ms": 16377,
+      "text": "The crash on import of long audio files."
+    },
+    {
+      "speaker_id": "speaker_1",
+      "start_ms": 16777,
+      "end_ms": 19652,
+      "text": "Okay, let's fix that first and ship on Monday."
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "transcript": [
+    {
+      "speaker_id": "speaker_1",
+      "start_ms": 800,
+      "end_ms": 3403,
+      "text": "Итак, у нас три вопроса на повестке."
+    },
+    {
+      "speaker_id": "speaker_2",
+      "start_ms": 3803,
+      "end_ms": 6583,
+      "text": "Можно я начну? У меня короткий доклад."
+    },
+    {
+      "speaker_id": "speaker_1",
+      "start_ms": 6833,
+      "end_ms": 7413,
+      "text": "Конечно."
+    },
+    {
+      "speaker_id": "speaker_2",
+      "start_ms": 7813,
+      "end_ms": 12148,
+      "text": "Мы закупили сорок килограммов корма и двенадцать новых когтеточек."
+    },
+    {
+      "speaker_id": "speaker_3",
+      "start_ms": 12448,
+      "end_ms": 13794,
+      "text": "А бюджет на это согласовали?"
+    },
+    {
+      "speaker_id": "speaker_2",
+      "start_ms": 13994,
+      "end_ms": 15592,
+      "text": "Да, ещё в октябре."
+    },
+    {
+      "speaker_id": "speaker_3",
+      "start_ms": 16092,
+      "end_ms": 20532,
+      "text": "Хорошо. Тогда у меня вопрос по графику дежурств: кто сторожит амбар ночью?"
+    },
+    {
+      "speaker_id": "speaker_1",
+      "start_ms": 20882,
+      "end_ms": 23835,
+      "text": "Предлагаю по очереди, начиная с понедельника."
+    },
+    {
+      "speaker_id": "speaker_3",
+      "start_ms": 23685,
+      "end_ms": 23930,
+      "text": "Угу."
+    },
+    {
+      "speaker_id": "speaker_2",
+      "start_ms": 24230,
+      "end_ms": 25168,
+      "text": "Я согласен."
+    },
+    {
+      "speaker_id": "speaker_1",
+      "start_ms": 25568,
+      "end_ms": 28563,
+      "text": "Отлично, тогда все свободны. Спасибо!"
+    }
+  ]
+}
