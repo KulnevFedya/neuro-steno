@@ -14,7 +14,9 @@ data class UiState(
     val utterances: List<Utterance> = emptyList(),
     val rtf: Double? = null,
     val numSpeakers: Int = -1,
-    val lang: String = "ru",
+    /** Режим языка: "auto" / "ru" / "en"; [detectedLang] — язык, которым распознана запись. */
+    val lang: String = DEFAULT_LANG,
+    val detectedLang: String? = null,
     /** Пользовательские имена спикеров: только UI и TXT, в JSON остаётся speaker_id. */
     val speakerNames: Map<String, String> = emptyMap(),
     val error: String? = null,

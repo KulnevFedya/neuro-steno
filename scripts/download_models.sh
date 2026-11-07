@@ -26,6 +26,12 @@ for f in base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt;
   [ -f "$MODELS/en/$f" ] || curl -fL -o "$MODELS/en/$f" "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-base.en/resolve/main/$f"
 done
 
+# LID (whisper tiny multilingual): расширение .model — чтобы лежали в APK сжатыми (не попадают в noCompress)
+mkdir -p "$MODELS/lid"
+for p in encoder decoder; do
+  [ -f "$MODELS/lid/tiny-$p.int8.model" ] || curl -fL -o "$MODELS/lid/tiny-$p.int8.model" "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-tiny/resolve/main/tiny-$p.int8.onnx"
+done
+
 mkdir -p "$MODELS/diar"
 if [ ! -f "$MODELS/diar/seg.int8.onnx" ]; then
   tmp="$(mktemp -d)"

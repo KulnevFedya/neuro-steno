@@ -6,7 +6,7 @@ PKG=com.nuclearhack.steno
 AUDIO="${AUDIO_DIR:-$ROOT/test_audio}"   # AUDIO_DIR/REF_DIR/MEM=1: длинные файлы и пик памяти
 REF="${REF_DIR:-$ROOT/eval/ref}"
 GLOB="${GLOB:-*.wav}"             # GLOB='en_*.wav' EVAL_LANG=en — английские файлы
-EVAL_LANG="${EVAL_LANG:-ru}"
+EVAL_LANG="${EVAL_LANG:-auto}"    # auto (LID, как в приложении) | ru | en
 SPK="${SPK:--1}"                   # SPK=3 — заданное число спикеров (как ручной выбор в UI)
 D=/sdcard/Android/data/$PKG/files
 VARIANT="${VARIANT:-release}"   # VARIANT=debug — отладочная сборка

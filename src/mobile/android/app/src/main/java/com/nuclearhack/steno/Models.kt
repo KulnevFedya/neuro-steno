@@ -17,6 +17,9 @@ import com.k2fsa.sherpa.onnx.OfflineWhisperModelConfig
 import com.k2fsa.sherpa.onnx.SileroVadModelConfig
 import com.k2fsa.sherpa.onnx.SpeakerEmbeddingExtractor
 import com.k2fsa.sherpa.onnx.SpeakerEmbeddingExtractorConfig
+import com.k2fsa.sherpa.onnx.SpokenLanguageIdentification
+import com.k2fsa.sherpa.onnx.SpokenLanguageIdentificationConfig
+import com.k2fsa.sherpa.onnx.SpokenLanguageIdentificationWhisperConfig
 import com.k2fsa.sherpa.onnx.Vad
 import com.k2fsa.sherpa.onnx.VadModelConfig
 
@@ -25,6 +28,11 @@ const val CLUSTER_THRESHOLD = 0.5f
 const val NUM_THREADS = 4
 
 private const val EMB_MODEL = "models/diar/titanet_small.onnx"
+
+/** Режим языка по умолчанию: "auto" (LID), "ru" или "en". */
+const val DEFAULT_LANG = "auto"
+/** Сколько речи (мс) отдаём LID. */
+const val LID_SPEECH_MS = 20_000L
 
 /**
  * Модели ASR+диаризации: грузятся в фоне при старте приложения и живут в памяти до [releaseAll]
@@ -37,8 +45,9 @@ object Models {
     private var sd: OfflineSpeakerDiarization? = null
     private var rec: OfflineRecognizer? = null
     private var recLang: String? = null
-    /** Язык распознавания: "ru" (GigaAM v3) или "en" (Whisper base.en). */
-    @Volatile var lang: String = "ru"
+    /** Режим языка: "auto" (LID), "ru" (GigaAM v3) или "en" (Whisper base.en). */
+    @Volatile var lang: String = DEFAULT_LANG
+    private var lid: SpokenLanguageIdentification? = null
     private var emb: SpeakerEmbeddingExtractor? = null
     private var vad: Vad? = null
     private val lock = Any()
@@ -71,8 +80,9 @@ object Models {
             ),
         )
         val e = SpeakerEmbeddingExtractor(a, SpeakerEmbeddingExtractorConfig(model = EMB_MODEL, numThreads = NUM_THREADS))
-        val l = lang
+        val l = if (lang == "en") "en" else "ru"
         val r = buildRecognizer(context, l)
+        val li = if (lang == "auto") buildLid(context) else null
         val v = Vad(
             a,
             VadModelConfig(
@@ -89,7 +99,7 @@ object Models {
                 provider = "cpu",
             ),
         )
-        synchronized(lock) { sd = d; emb = e; rec = r; recLang = l; vad = v }
+        synchronized(lock) { sd = d; emb = e; rec = r; recLang = l; vad = v; lid = li }
         Log.i(TAG, "models loaded in ${SystemClock.elapsedRealtime() - t0} ms")
     }
 
@@ -118,9 +128,53 @@ object Models {
         lang = l
         val app = context.applicationContext
         Thread({
-            try { loader?.join(); if (sd != null) recognizer(app, l) } catch (t: Throwable) { Log.e(TAG, "recognizer load failed", t) }
+            try {
+                loader?.join()
+                if (sd != null) {
+                    if (l == "auto") lidModel(app) else recognizer(app, l)
+                }
+            } catch (t: Throwable) { Log.e(TAG, "recognizer load failed", t) }
         }, "lang-loader").start()
     }
+
+    /**
+     * Язык речи по whisper tiny (multilingual): только "ru" или "en", всё остальное и ошибки → "ru".
+     * [speech] — до [LID_SPEECH_MS] речи (16 кГц).
+     */
+    fun detectLang(context: Context, speech: FloatArray): String {
+        if (speech.size < AudioDecoder.TARGET_RATE) return "ru"
+        return try {
+            val t0 = SystemClock.elapsedRealtime()
+            val m = lidModel(context)
+            val s = m.createStream()
+            s.acceptWaveform(speech, AudioDecoder.TARGET_RATE)
+            val raw = m.compute(s).trim()
+            s.release()
+            val res = if (raw == "en") "en" else "ru"
+            Log.i(TAG, "lid: '$raw' -> $res in ${SystemClock.elapsedRealtime() - t0} ms (${speech.size * 1000L / AudioDecoder.TARGET_RATE} ms speech)")
+            res
+        } catch (t: Throwable) {
+            Log.e(TAG, "lid failed", t)
+            "ru"
+        }
+    }
+
+    private fun lidModel(context: Context): SpokenLanguageIdentification = synchronized(lock) {
+        lid ?: buildLid(context.applicationContext).also { lid = it }
+    }
+
+    // модели LID лежат в APK сжатыми (расширение не из noCompress): ~103 → ~60 МБ
+    private fun buildLid(context: Context) = SpokenLanguageIdentification(
+        context.assets,
+        SpokenLanguageIdentificationConfig(
+            whisper = SpokenLanguageIdentificationWhisperConfig(
+                encoder = "models/lid/tiny-encoder.int8.model",
+                decoder = "models/lid/tiny-decoder.int8.model",
+            ),
+            numThreads = NUM_THREADS,
+            provider = "cpu",
+        ),
+    )
 
     private fun buildRecognizer(context: Context, l: String): OfflineRecognizer {
         val model = if (l == "en") OfflineModelConfig(
@@ -167,8 +221,8 @@ object Models {
     fun releaseAll() {
         loader?.join()
         synchronized(lock) {
-            sd?.release(); emb?.release(); rec?.release(); vad?.release()
-            sd = null; emb = null; rec = null; recLang = null; vad = null
+            sd?.release(); emb?.release(); rec?.release(); vad?.release(); lid?.release()
+            sd = null; emb = null; rec = null; recLang = null; vad = null; lid = null
             loader = null
         }
         Log.i(TAG, "models released")

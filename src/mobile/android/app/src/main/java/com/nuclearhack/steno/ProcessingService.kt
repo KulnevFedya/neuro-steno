@@ -50,7 +50,7 @@ class ProcessingService : Service() {
             ACTION_TRANSCRIBE -> {
                 val uri = intent.data!!
                 val spk = intent.getIntExtra(EXTRA_SPK, -1)
-                val lang = intent.getStringExtra(EXTRA_LANG) ?: "ru"
+                val lang = intent.getStringExtra(EXTRA_LANG) ?: DEFAULT_LANG
                 ({ transcribe(uri, spk, lang) })
             }
             ACTION_SUMMARIZE -> ({ summarize() })
@@ -58,7 +58,7 @@ class ProcessingService : Service() {
                 val input = intent.getStringExtra(EXTRA_IN)!!
                 val spk = intent.getIntExtra(EXTRA_SPK, -1)
                 val withSummary = intent.getBooleanExtra(EXTRA_SUMMARY, false)
-                val lang = intent.getStringExtra(EXTRA_LANG) ?: "ru"
+                val lang = intent.getStringExtra(EXTRA_LANG) ?: DEFAULT_LANG
                 ({ batch(File(input), spk, lang, withSummary) })
             }
             else -> null
@@ -94,7 +94,7 @@ class ProcessingService : Service() {
                 AppState.update { it.copy(progress = p) }
                 progress("Расшифровка: $name", p)
             }
-            AppState.update { it.copy(busy = false, progress = 1f, utterances = r.utterances, rtf = r.rtf) }
+            AppState.update { it.copy(busy = false, progress = 1f, utterances = r.utterances, rtf = r.rtf, detectedLang = r.lang) }
             done("Готово: $name", "${r.utterances.size} реплик, спикеров: ${r.numSpeakers}")
         } catch (t: Throwable) {
             Log.e(TAG, "transcribe failed", t)
@@ -151,7 +151,7 @@ class ProcessingService : Service() {
                     Models.await(this) // вернуть модели для следующего файла
                 }
                 File(outDir, "$name.meta.json").writeText(
-                    "{\"speakers\": ${r.numSpeakers}, \"audio_ms\": ${r.audioMs}, \"proc_ms\": ${r.decodeAsrMs}, \"rtf\": ${r.rtf}}\n"
+                    "{\"speakers\": ${r.numSpeakers}, \"lang\": \"${r.lang}\", \"audio_ms\": ${r.audioMs}, \"proc_ms\": ${r.decodeAsrMs}, \"rtf\": ${r.rtf}}\n"
                 )
             } catch (t: Throwable) {
                 Log.e(TAG, "batch failed for ${f.name}", t)

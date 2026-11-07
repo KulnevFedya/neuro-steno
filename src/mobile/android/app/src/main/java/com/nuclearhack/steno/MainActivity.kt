@@ -152,7 +152,7 @@ private fun Screen(vm: MainViewModel) {
                     }
                     Text("Язык записи", style = MaterialTheme.typography.labelMedium)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        for ((label, l) in listOf("Русский" to "ru", "English" to "en")) {
+                        for ((label, l) in listOf("Авто" to "auto", "Русский" to "ru", "English" to "en")) {
                             FilterChip(selected = st.lang == l, onClick = { vm.setLang(l) }, enabled = !st.working && !rec.recording, label = { Text(label) })
                         }
                     }
@@ -176,7 +176,7 @@ private fun Screen(vm: MainViewModel) {
                         val spk = sorted.map { it.speakerId }.distinct()
                         if (sorted.isEmpty()) Text("Речь не обнаружена", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         else Text(
-                            "${sorted.size} реплик · спикеров: ${spk.size}" + (st.rtf?.let { " · RTF ${"%.2f".format(it)}" } ?: ""),
+                            "${sorted.size} реплик · спикеров: ${spk.size}" + (st.detectedLang?.let { " · ${it.uppercase()}" } ?: "") + (st.rtf?.let { " · RTF ${"%.2f".format(it)}" } ?: ""),
                             style = MaterialTheme.typography.bodySmall,
                         )
                     }

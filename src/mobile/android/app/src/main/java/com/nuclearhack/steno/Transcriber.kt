@@ -15,6 +15,7 @@ data class TranscribeResult(
     val audioMs: Long,
     val decodeAsrMs: Long,
     val numSpeakers: Int = 1,
+    val lang: String = "ru",
 ) {
     val rtf: Double get() = if (audioMs > 0) decodeAsrMs.toDouble() / audioMs else 0.0
 }
@@ -52,8 +53,9 @@ class Transcriber(private val context: Context) {
             val ids = Segmenter.speakerIds(segs)
             Log.i(TAG, "diarization ${tDiar - tDecode} ms + recluster ${tRecl - tDiar} ms, raw=${raw.size} segs=${segs.size} speakers=${ids.size}")
 
+            val asrLang = if (lang == "auto") Models.detectLang(context, lidSpeech(pcm, segs)) else lang
             val utterances = ArrayList<Utterance>()
-            val rec = Models.recognizer(context, lang)
+            val rec = Models.recognizer(context, asrLang)
             for ((i, s) in segs.withIndex()) {
                 val w = Segmenter.padded(s, audioMs)
                 val text = if (!Segmenter.needsVadSplit(w)) {
@@ -65,10 +67,26 @@ class Transcriber(private val context: Context) {
                 onProgress(0.5f + 0.5f * (i + 1) / segs.size)
             }
             val elapsed = SystemClock.elapsedRealtime() - t0
-            val res = TranscribeResult(utterances, audioMs, elapsed, ids.size)
-            Log.i(TAG, "asr[$lang] ${SystemClock.elapsedRealtime() - tDiar} ms; total ${elapsed} ms, audio ${audioMs} ms, RTF=${"%.3f".format(res.rtf)}, utterances=${utterances.size}")
+            val res = TranscribeResult(utterances, audioMs, elapsed, ids.size, asrLang)
+            Log.i(TAG, "asr[$asrLang] ${SystemClock.elapsedRealtime() - tDiar} ms; total ${elapsed} ms, audio ${audioMs} ms, RTF=${"%.3f".format(res.rtf)}, utterances=${utterances.size}")
             return res
         }
+    }
+
+    /** Первые [LID_SPEECH_MS] речи по сегментам диаризации (паузы между репликами выкинуты). */
+    private fun lidSpeech(pcm: PcmStore, segs: List<Seg>): FloatArray {
+        val parts = ArrayList<FloatArray>()
+        var left = LID_SPEECH_MS
+        for (s in segs) {
+            if (left <= 0) break
+            val end = minOf(s.endMs, s.startMs + left)
+            parts.add(pcm.read(s.startMs, end))
+            left -= end - s.startMs
+        }
+        val out = FloatArray(parts.sumOf { it.size })
+        var o = 0
+        for (p in parts) { p.copyInto(out, o); o += p.size }
+        return out
     }
 
     /** sherpa-onnx: [numSpeakers] <= 0 — авто (порог [CLUSTER_THRESHOLD]). */
