@@ -63,6 +63,25 @@ class NotesCleanTest {
         assertEquals("- Обсудили закупку корма\n- Каждый пункт с новой строки\n- Иван готовит отчёт", clean)
     }
 
+    @Test fun keepsAttributedParaphraseDropsVerbatim() {
+        val src = listOf("Коллеги, добрый день. Начинаем планёрку по проекту Катовицы.", "Да.")
+        val raw = "- Спикер 1: Обсуждали планёрку по проекту Катовицы.\n- Спикер 1: Коллеги, добрый день. Начинаем планёрку по проекту Катовицы.\n- Спикер 2: В пятницу будет прототип."
+        assertEquals(
+            "- Спикер 1 — Обсуждали планёрку по проекту Катовицы.\n- Спикер 2 — В пятницу будет прототип.",
+            SummaryLogic.cleanNotes(raw, src),
+        )
+    }
+
+    @Test fun stripsInstructionHeads() {
+        assertEquals("- 40 кг корма\n- бюджет согласован", SummaryLogic.cleanNotes("- Что обсуждали: 40 кг корма\n- Какие решения приняты: бюджет согласован"))
+    }
+
+    @Test fun doubledBulletNoneIsEmpty() {
+        assertTrue(SummaryLogic.parseItems("- - нет\n- - не").isEmpty())
+        assertTrue(SummaryLogic.parseItems("- Решений не было.").isEmpty())
+        assertEquals(listOf("Прототип к пятнице"), SummaryLogic.parseItems("- - Прототип к пятнице"))
+    }
+
     @Test fun itemsDropEchoOfInstructions() {
         val items = SummaryLogic.parseItems("- Если решений не было, напиши «- нет».\n- Перенести релиз")
         assertEquals(listOf("Перенести релиз"), items)

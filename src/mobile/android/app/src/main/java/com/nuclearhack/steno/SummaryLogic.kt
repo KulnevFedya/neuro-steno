@@ -73,14 +73,40 @@ object SummaryLogic {
         prefill = "-",
     )
 
-    /** Конспект без эха инструкции и без дословных реплик («Спикер N: …»). */
-    fun cleanNotes(text: String): String {
+    /**
+     * Конспект без эха инструкции и без дословных реплик. Пересказ с атрибуцией («Спикер 1: обсуждали X»)
+     * сохраняется как «Спикер 1 — обсуждали X»; выбрасывается только копия реплики из [source] или обрывок < 3 слов.
+     */
+    fun cleanNotes(text: String, source: Collection<String> = emptyList()): String {
         val instr = norm(MAP_ASK_RU) + "|" + norm(MAP_ASK_EN)
-        return text.lines().map { it.trim() }.filter { l ->
-            val body = l.removePrefix("-").removePrefix("•").trim()
+        val src = source.map(::norm).filter { it.length >= 8 }
+        return text.lines().mapNotNull { l ->
+            var body = stripBullets(l).replace(ASK_HEAD, "").trim()
+            val who = COPIED.find(body)
+            if (who != null) {
+                val rest = body.substring(who.range.last + 1).trim()
+                if (rest.split(Regex("\\s+")).count { w -> w.any { it.isLetterOrDigit() } } < 3 || isCopy(rest, src)) return@mapNotNull null
+                body = "${who.value.removeSuffix(":").trim()} — $rest"
+            }
             val n = norm(body)
-            n.isNotEmpty() && !COPIED.containsMatchIn(body) && !(n.length >= 8 && instr.contains(n))
+            if (n.isEmpty() || (n.length >= 8 && instr.contains(n)) || isCopy(body, src)) null else "- $body"
         }.joinToString("\n")
+    }
+
+    /** Заголовки из инструкции map-шага, которые модель повторяет перед пунктом. */
+    private val ASK_HEAD = Regex("^(что обсуждали|какие решения приняты|кто что должен сделать|what was discussed|what was decided|who must do what)\\s*[:—-]\\s*", RegexOption.IGNORE_CASE)
+
+    /** Дословная копия реплики: совпадает с репликой или целиком в неё входит. */
+    private fun isCopy(s: String, src: List<String>): Boolean {
+        val n = norm(s)
+        return n.length >= 8 && src.any { it == n || (n.length >= 20 && it.contains(n)) }
+    }
+
+    /** «- - нет» → «нет»: модель иногда дублирует маркер после префилла. */
+    private fun stripBullets(s: String): String {
+        var t = s.trim()
+        while (t.isNotEmpty() && t[0] in "-•*–—") t = t.substring(1).trim()
+        return t
     }
 
     enum class Kind { SUMMARY, DECISIONS, TASKS }
@@ -108,7 +134,7 @@ object SummaryLogic {
         Kind.DECISIONS, Kind.TASKS -> "-"
     }
 
-    private val NONE = Regex("^(нет|none|n/a|-)\\.?$", RegexOption.IGNORE_CASE)
+    private val NONE = Regex("^(нет|не|none|no|n/a|-|(решений|задач)?\\s*(нет|не было|не поставлено)\\b.*|(no|none of)\\s+(decisions|tasks)\\b.*)\\.?$", RegexOption.IGNORE_CASE)
     private val COPIED = Regex("^(спикер|speaker)\\s*\\d+\\s*:", RegexOption.IGNORE_CASE)
 
     /** Абзац резюме: до первой пустой строки / следующего заголовка. */
@@ -120,7 +146,7 @@ object SummaryLogic {
     /** Список пунктов «- …»: без дословных реплик («Спикер N: …»), без «нет», до 5 штук. */
     fun parseItems(text: String, source: Collection<String> = emptyList()): List<String> {
         val src = source.map(::norm).toSet()
-        return text.lines().map { it.trim().removePrefix("-").removePrefix("•").removePrefix("*").trim() }
+        return text.lines().map(::stripBullets)
             .filter { it.isNotEmpty() && !NONE.matches(it) && !COPIED.containsMatchIn(it) && !it.endsWith(":") }
             .filter { norm(it) !in src && !(norm(it).length >= 8 && ECHO.contains(norm(it))) }
             .distinct().take(5)

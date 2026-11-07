@@ -32,7 +32,7 @@ class Summarizer(private val context: Context) {
                 for ((i, c) in chunks.withIndex()) {
                     onProgress("map", i.toFloat() / chunks.size)
                     val tc = SystemClock.elapsedRealtime()
-                    val out = mapNotes(llm, c, ru)
+                    val out = mapNotes(llm, c, ru, sourceTexts)
                     Log.i(TAG, "map ${i + 1}/${chunks.size}: ${SystemClock.elapsedRealtime() - tc} ms, ${out.length} chars")
                     if (out.isNotBlank()) parts.add(out)
                 }
@@ -44,7 +44,7 @@ class Summarizer(private val context: Context) {
                     if (groups.size <= 1) break
                     notes = groups.mapIndexed { i, g ->
                         onProgress("reduce", i.toFloat() / groups.size)
-                        mapNotes(llm, g, ru)
+                        mapNotes(llm, g, ru, emptyList())
                     }.filter { it.isNotBlank() }.joinToString("\n")
                     level++
                 }
@@ -59,7 +59,8 @@ class Summarizer(private val context: Context) {
             onProgress("final", 0.4f)
             val decisions = SummaryLogic.parseItems(ask(SummaryLogic.Kind.DECISIONS, 140), sourceTexts)
             onProgress("final", 0.7f)
-            val tasks = SummaryLogic.parseItems(ask(SummaryLogic.Kind.TASKS, 140), sourceTexts)
+            // пункты, уже попавшие в решения, в задачах не повторяем (0.5B часто отвечает одним списком)
+            val tasks = SummaryLogic.parseItems(ask(SummaryLogic.Kind.TASKS, 140), sourceTexts + decisions)
             Log.i(TAG, "final: ${SystemClock.elapsedRealtime() - tf} ms")
             val parsed = SummaryLogic.Summary(summaryText.ifBlank { notes.take(400) }, decisions, tasks)
             val ms = SystemClock.elapsedRealtime() - t0
@@ -70,8 +71,10 @@ class Summarizer(private val context: Context) {
     }
 
     /** Конспект одного чанка: в ответ дописываем префилл "-", чтобы получить маркированный список. */
-    private fun mapNotes(llm: LlamaBridge, chunk: String, ru: Boolean): String =
-        llm.generate(SummaryLogic.mapPrompt(chunk, ru), SummaryLogic.MAX_NEW_MAP)?.let { SummaryLogic.cleanNotes("-$it") }.orEmpty()
+    private fun mapNotes(llm: LlamaBridge, chunk: String, ru: Boolean, source: Collection<String>): String =
+        llm.generate(SummaryLogic.mapPrompt(chunk, ru), SummaryLogic.MAX_NEW_MAP)
+            ?.also { Log.d(TAG, "map raw: ${it.take(300).replace("\n", " | ")}") }
+            ?.let { SummaryLogic.cleanNotes("-$it", source) }.orEmpty()
 
     /** GGUF из assets → filesDir (llama.cpp нужен путь к файлу), с прогрессом копирования. */
     private fun ensureModel(onProgress: (String, Float) -> Unit): File {

@@ -3,7 +3,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PKG=com.nuclearhack.steno; D=/sdcard/Android/data/$PKG/files
-[ "${2:-}" = "--no-install" ] || adb install -r "$ROOT/src/mobile/android/app/build/outputs/apk/debug/app-debug.apk" | tail -1
+[ "${2:-}" = "--no-install" ] || adb install -r "$ROOT/src/mobile/android/app/build/outputs/apk/${VARIANT:-release}/app-${VARIANT:-release}.apk" | tail -1
 adb shell am force-stop $PKG; adb shell am start -n $PKG/.DebugActivity >/dev/null; sleep 4; adb shell am force-stop $PKG
 adb shell "rm -f $D/in/*; rm -rf $D/out/*"
 adb push "$1" $D/in/ | tail -1
