@@ -17,12 +17,12 @@ test_id,timestamp_utc,commit,file_name,duration_seconds,lang,num_speakers,wer,we
 2026-11-07T08:08:11Z_ru_meeting_2spk_noisy,2026-11-07T08:08:11Z,1a468e3,ru_meeting_2spk_noisy.wav,33.8,ru,2,0.2321,0.0714,0.0439,47.0,0.42,emulator-arm64,phase2 diar(pyannote3+titanet_small thr0.5)->GigaAM3 transducer-punct int8
 2026-11-07T08:08:11Z_ru_meeting_3spk,2026-11-07T08:08:11Z,1a468e3,ru_meeting_3spk.wav,29.1,ru,3,0.1525,0.0339,0.1139,414.0,0.43,emulator-arm64,phase2 diar(pyannote3+titanet_small thr0.5)->GigaAM3 transducer-punct int8
 2026-11-07T08:08:11Z_ru_meeting_3spk_noisy,2026-11-07T08:08:11Z,1a468e3,ru_meeting_3spk_noisy.wav,29.1,ru,3,0.1695,0.0678,0.1626,406.0,0.445,emulator-arm64,phase2 diar(pyannote3+titanet_small thr0.5)->GigaAM3 transducer-punct int8
-2026-11-07T08:18:26Z_en_call_2spk,2026-11-07T08:18:26Z,49d93a5,en_call_2spk.wav,20.2,en,2,0.6545,0.3509,0.0266,32.0,0.583,emulator-arm64,"block0 first run incl. 5.4s model-load wait in 1st file"
-2026-11-07T08:18:26Z_en_call_2spk_noisy,2026-11-07T08:18:26Z,49d93a5,en_call_2spk_noisy.wav,20.2,en,2,0.7818,0.5439,0.0423,52.0,0.298,emulator-arm64,"block0 first run incl. 5.4s model-load wait in 1st file"
-2026-11-07T08:18:26Z_ru_meeting_2spk,2026-11-07T08:18:26Z,49d93a5,ru_meeting_2spk.wav,33.8,ru,2,0.125,0.0179,0.0197,31.0,0.323,emulator-arm64,"block0 first run incl. 5.4s model-load wait in 1st file"
-2026-11-07T08:18:26Z_ru_meeting_2spk_noisy,2026-11-07T08:18:26Z,49d93a5,ru_meeting_2spk_noisy.wav,33.8,ru,2,0.1964,0.0357,0.0299,47.0,0.359,emulator-arm64,"block0 first run incl. 5.4s model-load wait in 1st file"
-2026-11-07T08:18:26Z_ru_meeting_3spk,2026-11-07T08:18:26Z,49d93a5,ru_meeting_3spk.wav,29.1,ru,3,0.1525,0.0339,0.1139,414.0,0.338,emulator-arm64,"block0 first run incl. 5.4s model-load wait in 1st file"
-2026-11-07T08:18:26Z_ru_meeting_3spk_noisy,2026-11-07T08:18:26Z,49d93a5,ru_meeting_3spk_noisy.wav,29.1,ru,3,0.1695,0.0678,0.1249,406.0,0.361,emulator-arm64,"block0 first run incl. 5.4s model-load wait in 1st file"
+2026-11-07T08:18:26Z_en_call_2spk,2026-11-07T08:18:26Z,49d93a5,en_call_2spk.wav,20.2,en,2,0.6545,0.3509,0.0266,32.0,0.583,emulator-arm64,block0 first run incl. 5.4s model-load wait in 1st file
+2026-11-07T08:18:26Z_en_call_2spk_noisy,2026-11-07T08:18:26Z,49d93a5,en_call_2spk_noisy.wav,20.2,en,2,0.7818,0.5439,0.0423,52.0,0.298,emulator-arm64,block0 first run incl. 5.4s model-load wait in 1st file
+2026-11-07T08:18:26Z_ru_meeting_2spk,2026-11-07T08:18:26Z,49d93a5,ru_meeting_2spk.wav,33.8,ru,2,0.125,0.0179,0.0197,31.0,0.323,emulator-arm64,block0 first run incl. 5.4s model-load wait in 1st file
+2026-11-07T08:18:26Z_ru_meeting_2spk_noisy,2026-11-07T08:18:26Z,49d93a5,ru_meeting_2spk_noisy.wav,33.8,ru,2,0.1964,0.0357,0.0299,47.0,0.359,emulator-arm64,block0 first run incl. 5.4s model-load wait in 1st file
+2026-11-07T08:18:26Z_ru_meeting_3spk,2026-11-07T08:18:26Z,49d93a5,ru_meeting_3spk.wav,29.1,ru,3,0.1525,0.0339,0.1139,414.0,0.338,emulator-arm64,block0 first run incl. 5.4s model-load wait in 1st file
+2026-11-07T08:18:26Z_ru_meeting_3spk_noisy,2026-11-07T08:18:26Z,49d93a5,ru_meeting_3spk_noisy.wav,29.1,ru,3,0.1695,0.0678,0.1249,406.0,0.361,emulator-arm64,block0 first run incl. 5.4s model-load wait in 1st file
 2026-11-07T08:20:03Z_en_call_2spk,2026-11-07T08:20:03Z,49d93a5,en_call_2spk.wav,20.2,en,2,0.6545,0.3509,0.0266,32.0,0.31,emulator-arm64,"block0 models preloaded, threads=4, small-cluster merge; RTF excl. model load"
 2026-11-07T08:20:03Z_en_call_2spk_noisy,2026-11-07T08:20:03Z,49d93a5,en_call_2spk_noisy.wav,20.2,en,2,0.7818,0.5439,0.0423,52.0,0.296,emulator-arm64,"block0 models preloaded, threads=4, small-cluster merge; RTF excl. model load"
 2026-11-07T08:20:03Z_ru_meeting_2spk,2026-11-07T08:20:03Z,49d93a5,ru_meeting_2spk.wav,33.8,ru,2,0.125,0.0179,0.0197,31.0,0.31,emulator-arm64,"block0 models preloaded, threads=4, small-cluster merge; RTF excl. model load"
@@ -59,24 +59,24 @@ test_id,timestamp_utc,commit,file_name,duration_seconds,lang,num_speakers,wer,we
 2026-11-07T09:49:32Z_ru_meeting_3spk_noisy,2026-11-07T09:49:32Z,f01ed93,ru_meeting_3spk_noisy.wav,29.1,ru,3,0.1695,0.0678,0.1249,406.0,0.086,emulator-arm64,phase4 final release (FGS+UX)
 2026-11-07T09:49:45Z_en_call_2spk,2026-11-07T09:49:45Z,f01ed93,en_call_2spk.wav,20.2,en,2,0.1273,0.0526,0.0266,32.0,0.179,emulator-arm64,phase4 final release EN whisper base.en
 2026-11-07T09:49:45Z_en_call_2spk_noisy,2026-11-07T09:49:45Z,f01ed93,en_call_2spk_noisy.wav,20.2,en,2,0.2,0.1053,0.0423,52.0,0.131,emulator-arm64,phase4 final release EN whisper base.en
-2026-11-07T10:25:20Z_real_ru_2spk,2026-11-07T10:25:20Z,3c28083,real_ru_2spk.wav,102.3,ru,2,0.2938,0.0667,0.2889,594.0,0.756,emulator,real voices sova
-2026-11-07T10:25:20Z_real_ru_3spk,2026-11-07T10:25:20Z,3c28083,real_ru_3spk.wav,130.0,ru,3,0.321,0.1265,0.4153,757.0,0.7,emulator,real voices sova
-2026-11-07T10:28:40Z_real_en_ami,2026-11-07T10:28:40Z,3c28083,real_en_ami.wav,150.4,en,4,0.7241,0.6414,0.4419,6842.0,1.202,emulator,real voices AMI sdm
-2026-11-07T11:18:32Z_real_ru_2spk,2026-11-07T11:18:32Z,f18a73c+recluster,real_ru_2spk.wav,102.3,ru,2,0.2542,0.0333,0.0837,659.0,0.774,emulator,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
-2026-11-07T11:18:32Z_real_ru_3spk,2026-11-07T11:18:32Z,f18a73c+recluster,real_ru_3spk.wav,130.0,ru,3,0.2881,0.0816,0.1473,741.0,0.739,emulator,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
-2026-11-07T11:18:32Z_ru_meeting_2spk,2026-11-07T11:18:32Z,f18a73c+recluster,ru_meeting_2spk.wav,33.8,ru,2,0.125,0.0179,0.0197,31.0,0.711,emulator,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
-2026-11-07T11:18:32Z_ru_meeting_2spk_noisy,2026-11-07T11:18:32Z,f18a73c+recluster,ru_meeting_2spk_noisy.wav,33.8,ru,2,0.1964,0.0357,0.0299,47.0,0.721,emulator,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
-2026-11-07T11:18:32Z_ru_meeting_3spk,2026-11-07T11:18:32Z,f18a73c+recluster,ru_meeting_3spk.wav,29.1,ru,3,0.1525,0.0339,0.1139,414.0,0.769,emulator,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
-2026-11-07T11:18:32Z_ru_meeting_3spk_noisy,2026-11-07T11:18:32Z,f18a73c+recluster,ru_meeting_3spk_noisy.wav,29.1,ru,3,0.1695,0.0678,0.1249,406.0,0.728,emulator,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
-2026-11-07T11:22:50Z_en_call_2spk,2026-11-07T11:22:50Z,f18a73c+recluster,en_call_2spk.wav,20.2,en,2,0.1273,0.0526,0.0266,32.0,1.146,emulator,recluster auto EN
-2026-11-07T11:22:50Z_en_call_2spk_noisy,2026-11-07T11:22:50Z,f18a73c+recluster,en_call_2spk_noisy.wav,20.2,en,2,0.2,0.1053,0.0423,52.0,0.99,emulator,recluster auto EN
-2026-11-07T11:22:50Z_real_en_ami,2026-11-07T11:22:50Z,f18a73c+recluster,real_en_ami.wav,150.4,en,4,0.753,0.6735,0.312,10359.0,1.229,emulator,recluster auto EN
-2026-11-07T11:25:28Z_real_ru_2spk,2026-11-07T11:25:28Z,f18a73c+recluster,real_ru_2spk.wav,102.3,ru,2,0.2542,0.0333,0.0837,659.0,0.768,emulator,manual spk=2
-2026-11-07T11:25:28Z_ru_meeting_2spk,2026-11-07T11:25:28Z,f18a73c+recluster,ru_meeting_2spk.wav,33.8,ru,2,0.125,0.0179,0.0197,31.0,0.705,emulator,manual spk=2
-2026-11-07T11:25:28Z_ru_meeting_2spk_noisy,2026-11-07T11:25:28Z,f18a73c+recluster,ru_meeting_2spk_noisy.wav,33.8,ru,2,0.1964,0.0357,0.0299,47.0,0.725,emulator,manual spk=2
-2026-11-07T11:28:02Z_real_ru_3spk,2026-11-07T11:28:02Z,f18a73c+recluster,real_ru_3spk.wav,130.0,ru,3,0.2881,0.0816,0.1473,741.0,0.737,emulator,manual spk=3
-2026-11-07T11:28:02Z_ru_meeting_3spk,2026-11-07T11:28:02Z,f18a73c+recluster,ru_meeting_3spk.wav,29.1,ru,3,0.1525,0.0339,0.1139,414.0,0.739,emulator,manual spk=3
-2026-11-07T11:28:02Z_ru_meeting_3spk_noisy,2026-11-07T11:28:02Z,f18a73c+recluster,ru_meeting_3spk_noisy.wav,29.1,ru,3,0.1695,0.0678,0.1249,406.0,0.766,emulator,manual spk=3
+2026-11-07T10:25:20Z_real_ru_2spk,2026-11-07T10:25:20Z,3c28083,real_ru_2spk.wav,102.3,ru,2,0.2938,0.0667,0.2889,594.0,0.756,emulator-arm64,real voices sova
+2026-11-07T10:25:20Z_real_ru_3spk,2026-11-07T10:25:20Z,3c28083,real_ru_3spk.wav,130.0,ru,3,0.321,0.1265,0.4153,757.0,0.7,emulator-arm64,real voices sova
+2026-11-07T10:28:40Z_real_en_ami,2026-11-07T10:28:40Z,3c28083,real_en_ami.wav,150.4,en,4,0.7241,0.6414,0.4419,6842.0,1.202,emulator-arm64,real voices AMI sdm
+2026-11-07T11:18:32Z_real_ru_2spk,2026-11-07T11:18:32Z,f18a73c+recluster,real_ru_2spk.wav,102.3,ru,2,0.2542,0.0333,0.0837,659.0,0.774,emulator-arm64,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
+2026-11-07T11:18:32Z_real_ru_3spk,2026-11-07T11:18:32Z,f18a73c+recluster,real_ru_3spk.wav,130.0,ru,3,0.2881,0.0816,0.1473,741.0,0.739,emulator-arm64,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
+2026-11-07T11:18:32Z_ru_meeting_2spk,2026-11-07T11:18:32Z,f18a73c+recluster,ru_meeting_2spk.wav,33.8,ru,2,0.125,0.0179,0.0197,31.0,0.711,emulator-arm64,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
+2026-11-07T11:18:32Z_ru_meeting_2spk_noisy,2026-11-07T11:18:32Z,f18a73c+recluster,ru_meeting_2spk_noisy.wav,33.8,ru,2,0.1964,0.0357,0.0299,47.0,0.721,emulator-arm64,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
+2026-11-07T11:18:32Z_ru_meeting_3spk,2026-11-07T11:18:32Z,f18a73c+recluster,ru_meeting_3spk.wav,29.1,ru,3,0.1525,0.0339,0.1139,414.0,0.769,emulator-arm64,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
+2026-11-07T11:18:32Z_ru_meeting_3spk_noisy,2026-11-07T11:18:32Z,f18a73c+recluster,ru_meeting_3spk_noisy.wav,29.1,ru,3,0.1695,0.0678,0.1249,406.0,0.728,emulator-arm64,recluster auto (merge0.68 small8%/4s 2..6 vadfill reassign)
+2026-11-07T11:22:50Z_en_call_2spk,2026-11-07T11:22:50Z,f18a73c+recluster,en_call_2spk.wav,20.2,en,2,0.1273,0.0526,0.0266,32.0,1.146,emulator-arm64,recluster auto EN
+2026-11-07T11:22:50Z_en_call_2spk_noisy,2026-11-07T11:22:50Z,f18a73c+recluster,en_call_2spk_noisy.wav,20.2,en,2,0.2,0.1053,0.0423,52.0,0.99,emulator-arm64,recluster auto EN
+2026-11-07T11:22:50Z_real_en_ami,2026-11-07T11:22:50Z,f18a73c+recluster,real_en_ami.wav,150.4,en,4,0.753,0.6735,0.312,10359.0,1.229,emulator-arm64,recluster auto EN
+2026-11-07T11:25:28Z_real_ru_2spk,2026-11-07T11:25:28Z,f18a73c+recluster,real_ru_2spk.wav,102.3,ru,2,0.2542,0.0333,0.0837,659.0,0.768,emulator-arm64,manual spk=2
+2026-11-07T11:25:28Z_ru_meeting_2spk,2026-11-07T11:25:28Z,f18a73c+recluster,ru_meeting_2spk.wav,33.8,ru,2,0.125,0.0179,0.0197,31.0,0.705,emulator-arm64,manual spk=2
+2026-11-07T11:25:28Z_ru_meeting_2spk_noisy,2026-11-07T11:25:28Z,f18a73c+recluster,ru_meeting_2spk_noisy.wav,33.8,ru,2,0.1964,0.0357,0.0299,47.0,0.725,emulator-arm64,manual spk=2
+2026-11-07T11:28:02Z_real_ru_3spk,2026-11-07T11:28:02Z,f18a73c+recluster,real_ru_3spk.wav,130.0,ru,3,0.2881,0.0816,0.1473,741.0,0.737,emulator-arm64,manual spk=3
+2026-11-07T11:28:02Z_ru_meeting_3spk,2026-11-07T11:28:02Z,f18a73c+recluster,ru_meeting_3spk.wav,29.1,ru,3,0.1525,0.0339,0.1139,414.0,0.739,emulator-arm64,manual spk=3
+2026-11-07T11:28:02Z_ru_meeting_3spk_noisy,2026-11-07T11:28:02Z,f18a73c+recluster,ru_meeting_3spk_noisy.wav,29.1,ru,3,0.1695,0.0678,0.1249,406.0,0.766,emulator-arm64,manual spk=3
 2026-11-07T11:46:59Z_real_ru_2spk,2026-11-07T11:46:59Z,bf57786,real_ru_2spk.wav,102.3,ru,2,0.2542,0.0333,0.0837,659.0,0.079,emulator-arm64,"clean RTF: cold boot, release bf57786, auto spk"
 2026-11-07T11:46:59Z_real_ru_3spk,2026-11-07T11:46:59Z,bf57786,real_ru_3spk.wav,130.0,ru,3,0.2881,0.0816,0.1473,741.0,0.078,emulator-arm64,"clean RTF: cold boot, release bf57786, auto spk"
 2026-11-07T11:46:59Z_ru_meeting_2spk,2026-11-07T11:46:59Z,bf57786,ru_meeting_2spk.wav,33.8,ru,2,0.125,0.0179,0.0197,31.0,0.074,emulator-arm64,"clean RTF: cold boot, release bf57786, auto spk"
