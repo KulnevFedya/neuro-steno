@@ -7,6 +7,7 @@ AUDIO="${AUDIO_DIR:-$ROOT/test_audio}"   # AUDIO_DIR/REF_DIR/MEM=1: длинны
 REF="${REF_DIR:-$ROOT/eval/ref}"
 GLOB="${GLOB:-*.wav}"             # GLOB='en_*.wav' EVAL_LANG=en — английские файлы
 EVAL_LANG="${EVAL_LANG:-ru}"
+SPK="${SPK:--1}"                   # SPK=3 — заданное число спикеров (как ручной выбор в UI)
 D=/sdcard/Android/data/$PKG/files
 VARIANT="${VARIANT:-release}"   # VARIANT=debug — отладочная сборка
 APK="$ROOT/src/mobile/android/app/build/outputs/apk/$VARIANT/app-$VARIANT.apk"
@@ -18,7 +19,7 @@ adb shell am force-stop $PKG
 adb shell "rm -f $D/in/*; rm -rf $D/out/*"
 adb push "$AUDIO"/$GLOB $D/in/ | tail -1
 adb logcat -c
-adb shell am start -n $PKG/.DebugActivity --es lang "$EVAL_LANG" >/dev/null
+adb shell am start -n $PKG/.DebugActivity --es lang "$EVAL_LANG" --ei spk "$SPK" >/dev/null
 sleep 5
 if [ "${MEM:-0}" = 1 ]; then  # пик PSS приложения каждые 5 с -> eval/mem.log
   ( while :; do echo "$(date +%T) $(adb shell dumpsys meminfo $PKG | grep -E 'TOTAL PSS|TOTAL:' | head -1 | tr -s ' ')"; sleep 5; done ) > "$ROOT/eval/mem.log" 2>&1 &

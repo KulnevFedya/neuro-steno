@@ -108,4 +108,5 @@ def main():
         print(f"{name}: spk={len(order)} segs={len(utts)} diar={t_d:.1f}s asr={t_a:.1f}s", file=sys.stderr)
 
 
-main()
+if __name__ == "__main__":
+    main()

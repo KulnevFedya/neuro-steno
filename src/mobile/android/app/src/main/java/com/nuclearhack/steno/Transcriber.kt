@@ -25,7 +25,7 @@ private const val EXPECTED_DIAR_RTF = 0.15
 /**
  * Файл → декод 16k mono (во временный файл) → диаризация (pyannote-3.0 + titanet) →
  * ASR (GigaAM v3 transducer, RU) по сегментам диаризации. Модели — из [Models] (грузятся при старте).
- * speaker_id и таймкоды — из диаризации. [numSpeakers] <= 0 — авто (порог кластеризации).
+ * speaker_id и таймкоды — из диаризации + [Recluster]. [numSpeakers] <= 0 — авто (2..6 спикеров).
  */
 class Transcriber(private val context: Context) {
 
@@ -42,12 +42,15 @@ class Transcriber(private val context: Context) {
             val tDecode = SystemClock.elapsedRealtime()
             Log.i(TAG, "decode ${tDecode - tModels} ms, audio $audioMs ms")
 
-            val raw = diarize(pcm, numSpeakers, audioMs) { onProgress(0.1f + it * 0.4f) }
+            val samples = pcm.readAll()
+            val raw = diarize(samples, -1, audioMs) { onProgress(0.1f + it * 0.37f) }
             val tDiar = SystemClock.elapsedRealtime()
-            val merged = if (numSpeakers > 0) raw else mergeSmallClusters(pcm, raw)
+            val merged = recluster(samples, raw, numSpeakers, audioMs)
+            onProgress(0.5f)
+            val tRecl = SystemClock.elapsedRealtime()
             val segs = Segmenter.build(merged)
             val ids = Segmenter.speakerIds(segs)
-            Log.i(TAG, "diarization ${tDiar - tDecode} ms, raw=${raw.size} segs=${segs.size} speakers=${ids.size}")
+            Log.i(TAG, "diarization ${tDiar - tDecode} ms + recluster ${tRecl - tDiar} ms, raw=${raw.size} segs=${segs.size} speakers=${ids.size}")
 
             val utterances = ArrayList<Utterance>()
             val rec = Models.recognizer(context, lang)
@@ -68,9 +71,9 @@ class Transcriber(private val context: Context) {
         }
     }
 
-    private fun diarize(pcm: PcmStore, numSpeakers: Int, audioMs: Long, onProgress: (Float) -> Unit): List<Seg> {
+    /** sherpa-onnx: [numSpeakers] <= 0 — авто (порог [CLUSTER_THRESHOLD]). */
+    private fun diarize(samples: FloatArray, numSpeakers: Int, audioMs: Long, onProgress: (Float) -> Unit): List<Seg> {
         Models.setClusters(if (numSpeakers > 0) numSpeakers else -1)
-        val samples = pcm.readAll()
         // processWithCallback в AAR падает в JNI → process() + оценочный прогресс по времени
         val expectedMs = (audioMs * EXPECTED_DIAR_RTF).coerceAtLeast(1000.0)
         val start = SystemClock.elapsedRealtime()
@@ -87,35 +90,57 @@ class Transcriber(private val context: Context) {
         return res.sortedBy { it.start }.map { Seg((it.start * 1000).toLong(), (it.end * 1000).toLong(), it.speaker) }
     }
 
-    /** Мелкие кластеры (<3% речи или <2 с) → ближайший по косинусу средних эмбеддингов. */
-    private fun mergeSmallClusters(pcm: PcmStore, raw: List<Seg>): List<Seg> {
-        val totals = ClusterMerge.totals(raw)
-        val small = ClusterMerge.small(totals)
-        if (small.isEmpty()) return raw
-        val emb = totals.keys.associateWith { spk -> clusterEmbedding(pcm, raw.filter { it.speaker == spk }) }
-        val map = ClusterMerge.mapping(small, emb)
-        Log.i(TAG, "small clusters merged: $map (totals ms: $totals)")
-        return ClusterMerge.apply(raw, map)
+    /**
+     * [Recluster] поверх авто-диаризации + добор речи, пропущенной pyannote (Silero VAD). Заданное число
+     * спикеров: сливаем авто-кластеры до N; если авто нашла меньше N — повторная диаризация с numClusters=N.
+     */
+    private fun recluster(samples: FloatArray, auto: List<Seg>, numSpeakers: Int, audioMs: Long): List<Seg> {
+        var base = auto
+        var p = if (numSpeakers > 0) Recluster.fixed(numSpeakers) else Recluster.AUTO
+        if (numSpeakers > 0 && auto.map { it.speaker }.distinct().size < numSpeakers) {
+            base = diarize(samples, numSpeakers, audioMs) {}
+            p = Recluster.fixed(numSpeakers, absorbSmall = false)
+        }
+        val fill = Recluster.uncovered(speechRegions(samples), base)
+        val all = (base + fill).sortedBy { it.startMs }
+        val embs = HashMap<Int, FloatArray>()
+        for ((i, s) in all.withIndex()) Recluster.embWindow(s)?.let { w -> embed(samples, w)?.let { embs[i] = it } }
+        val res = Recluster.run(all, embs, p)
+        if (Log.isLoggable(TAG, Log.DEBUG)) Log.d(TAG, "recluster raw: " + all.joinToString(" ") { "${it.startMs}-${it.endMs}:${it.speaker}" })
+        Log.i(TAG, "recluster: sherpa ${base.map { it.speaker }.distinct().size} spk -> ${res.map { it.speaker }.distinct().size}, vad fill ${fill.size} (${fill.sumOf { it.endMs - it.startMs }} ms), emb ${embs.size}/${all.size}")
+        return res
     }
 
-    /** Средний эмбеддинг по самым длинным сегментам кластера (до ~20 с аудио). */
-    private fun clusterEmbedding(pcm: PcmStore, segs: List<Seg>): FloatArray {
+    private fun embed(samples: FloatArray, w: LongRange): FloatArray? {
         val ex = Models.embedder
-        var budget = 20_000L
-        val embs = ArrayList<FloatArray>()
-        for (s in segs.sortedByDescending { it.endMs - it.startMs }) {
-            if (budget <= 0) break
-            val end = minOf(s.endMs, s.startMs + budget)
-            if (end - s.startMs < 400) continue
-            val st = ex.createStream()
-            st.acceptWaveform(pcm.read(s.startMs, end), AudioDecoder.TARGET_RATE)
-            st.inputFinished()
-            if (ex.isReady(st)) embs.add(ex.compute(st))
-            st.release()
-            budget -= end - s.startMs
+        val a = (w.first * AudioDecoder.TARGET_RATE / 1000).toInt().coerceIn(0, samples.size)
+        val b = (w.last * AudioDecoder.TARGET_RATE / 1000).toInt().coerceIn(a, samples.size)
+        val st = ex.createStream()
+        st.acceptWaveform(samples.copyOfRange(a, b), AudioDecoder.TARGET_RATE)
+        st.inputFinished()
+        val v = if (ex.isReady(st)) Recluster.normalize(ex.compute(st)) else null
+        st.release()
+        return v
+    }
+
+    /** Речевые участки Silero VAD по всему файлу (мс). */
+    private fun speechRegions(samples: FloatArray): List<LongRange> {
+        val vad = Models.vadModel
+        val win = vad.config.sileroVadModelConfig.windowSize
+        val res = ArrayList<LongRange>()
+        fun drain() {
+            while (!vad.empty()) {
+                val f = vad.front()
+                res.add(f.start * 1000L / AudioDecoder.TARGET_RATE..(f.start + f.samples.size) * 1000L / AudioDecoder.TARGET_RATE)
+                vad.pop()
+            }
         }
-        if (embs.isEmpty()) return FloatArray(ex.dim())
-        return FloatArray(embs[0].size) { i -> embs.sumOf { it[i].toDouble() }.toFloat() / embs.size }
+        vad.reset()
+        var off = 0
+        while (off + win <= samples.size) { vad.acceptWaveform(samples.copyOfRange(off, off + win)); off += win; drain() }
+        vad.flush(); drain()
+        vad.reset()
+        return res
     }
 
     /** Сегмент > 30 с: режем Silero VAD внутри. */

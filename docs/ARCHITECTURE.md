@@ -4,7 +4,7 @@
 Офлайн-расшифровка диалогов на Android: аудио → текст → спикеры → JSON. Без сети, все модели внутри APK.
 
 ## Компоненты
-Подробно в [PLAN.md](../PLAN.md): audio (декод в 16 кГц mono), diar (pyannote + CAM++), asr (GigaAM/Whisper по сегментам диаризации), merge (склейка соседних реплик одного спикера), llm (llama.cpp, резюме по кнопке), export (JSON), pipeline (foreground service).
+Подробно в [PLAN.md](../PLAN.md): audio (декод в 16 кГц mono), diar (pyannote + titanet_small в sherpa-onnx, затем Recluster: слияние центроидов, мелкие кластеры, 2..6 спикеров, добор пропущенной речи по Silero VAD), asr (GigaAM/Whisper по сегментам диаризации), merge (склейка соседних реплик одного спикера), llm (llama.cpp, резюме по кнопке), export (JSON), pipeline (foreground service).
 
 ## Основные технические решения
 - sherpa-onnx для VAD, ASR и диаризации; llama.cpp для LLM.

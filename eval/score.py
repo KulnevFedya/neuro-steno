@@ -5,14 +5,16 @@
   wer          — слова с пунктуацией и регистром (ё=е), токены по пробелам
   (числа → слова с обеих сторон, num2words)
   wer_no_punct — без пунктуации, нижний регистр, ё=е
-  der          — покадровая (10 мс), спикеры сопоставлены перебором перестановок
+  der          — покадровая (10 мс), спикеры сопоставлены венгерским алгоритмом (linear_sum_assignment)
   ts_error_ms  — средняя |Δstart|,|Δend| по эталонным репликам (против перекрывающихся гипотез)
   rtf          — из <name>.meta.json
 Строки дописываются в artifacts/test-results/results.csv.
 """
-import argparse, csv, datetime, itertools, json, os, re, subprocess, sys, wave
+import argparse, csv, datetime, json, os, re, subprocess, sys, wave
 
 import jiwer
+import numpy as np
+from scipy.optimize import linear_sum_assignment
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CSV_PATH = os.path.join(ROOT, "artifacts", "test-results", "results.csv")
@@ -81,19 +83,15 @@ def der(ref, hyp, step=10):
         return 0.0
     miss = sum(1 for a, b in zip(rl, hl) if a and not b)
     fa = sum(1 for a, b in zip(rl, hl) if b and not a)
-    best = None
-    if not hs:
-        best = 0
-    else:
-        pool = list(rs) + [None] * len(hs)
-        seen = set()
-        for perm in itertools.permutations(pool, len(hs)):
-            if perm in seen:
-                continue
-            seen.add(perm)
-            m = dict(zip(hs, perm))
-            ok = sum(1 for a, b in zip(rl, hl) if a and b and m[b] == a)
-            best = ok if best is None else max(best, ok)
+    best = 0
+    if hs:
+        ri, hi = {x: i for i, x in enumerate(rs)}, {x: i for i, x in enumerate(hs)}
+        cnt = np.zeros((len(hs), len(rs)), dtype=np.int64)
+        for a, b in zip(rl, hl):
+            if a and b:
+                cnt[hi[b], ri[a]] += 1
+        r_, c_ = linear_sum_assignment(cnt, maximize=True)
+        best = int(cnt[r_, c_].sum())
     both = sum(1 for a, b in zip(rl, hl) if a and b)
     conf = both - best
     return (miss + fa + conf) / speech
