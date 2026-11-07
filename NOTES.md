@@ -6,3 +6,10 @@
 - llama.cpp: submodule + свой JNI вместо модуля `llama.android` (у него minSdk 33).
 - Репозиторий: `config/example.env` и `docs/PROTOCOL.md` из шаблона не переносим (чужой кейс).
 - `test_audio/*.wav` коммитим (по ~1 МБ, нужны для eval), модели и APK нет.
+- Пайплайн: декод → диаризация → release → ASR по сегментам диаризации (<300 мс клеим с соседом, паддинг 150 мс, >30 с режем по VAD); speaker_id и таймкоды из диаризации.
+- LLM вне основного пайплайна: резюме по кнопке (первым); пунктуация через LLM — опция, по умолчанию выкл.
+- Язык по умолчанию RU, EN вручную; автоопределение не раньше фазы 4.
+- ABI только arm64-v8a (x86_64 убран, эмулятор arm64).
+- Модели sherpa-onnx читаем из assets через AssetManager; в filesDir копируем только GGUF.
+- Gradle на JDK 21 (Android Studio JBR) через `org.gradle.java.home` в ~/.gradle/gradle.properties.
+- Конец фазы 1: сравнить GigaAM v3 CTC-punct и transducer-punct (WER, RTF), результат записать сюда.
