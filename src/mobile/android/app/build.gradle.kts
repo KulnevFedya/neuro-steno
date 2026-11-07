@@ -23,10 +23,21 @@ android {
         }
     }
 
+    // ключ хакатонный, не секрет: лежит в репо, чтобы любой мог собрать подписанный release
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file("keystore/release.jks")
+            storePassword = "nuclearhack"
+            keyAlias = "steno"
+            keyPassword = "nuclearhack"
+        }
+    }
     buildTypes {
         release {
-            isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {

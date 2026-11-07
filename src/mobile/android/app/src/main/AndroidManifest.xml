@@ -14,5 +14,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- пакетный прогон для eval через adb; есть и в release -->
+        <activity android:name=".DebugActivity" android:exported="true" />
     </application>
 </manifest>

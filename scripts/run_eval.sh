@@ -6,7 +6,8 @@ PKG=com.nuclearhack.steno
 AUDIO="${AUDIO_DIR:-$ROOT/test_audio}"   # AUDIO_DIR/REF_DIR/MEM=1: длинные файлы и пик памяти
 REF="${REF_DIR:-$ROOT/eval/ref}"
 D=/sdcard/Android/data/$PKG/files
-APK="$ROOT/src/mobile/android/app/build/outputs/apk/debug/app-debug.apk"
+VARIANT="${VARIANT:-release}"   # VARIANT=debug — отладочная сборка
+APK="$ROOT/src/mobile/android/app/build/outputs/apk/$VARIANT/app-$VARIANT.apk"
 [ "${1:-}" = "--no-install" ] || adb install -r "$APK" | tail -1
 # приложение должно само создать каталоги (иначе нет доступа)
 adb shell am force-stop $PKG
