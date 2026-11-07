@@ -26,29 +26,45 @@ class SummaryLogicTest {
         assertEquals("а б в г д е ж з и к", ch.joinToString(" ") { it.trim() })
     }
 
-    @Test fun parsesSections() {
-        val s = SummaryLogic.parse(
-            "Краткое содержание: Обсудили релиз. Срок перенесли.\nРешения:\n- Перенести релиз на пятницу\n- Нанять тестировщика\nЗадачи:\n- Иван готовит отчёт\n"
-        )
-        assertEquals("Обсудили релиз. Срок перенесли.", s.summary)
-        assertEquals(listOf("Перенести релиз на пятницу", "Нанять тестировщика"), s.decisions)
-        assertEquals(listOf("Иван готовит отчёт"), s.tasks)
+    @Test fun summaryStopsAtBlankLineOrHeading() {
+        assertEquals("Участники обсудили релиз. Срок перенесли.", SummaryLogic.parseSummary("Участники обсудили релиз.\nСрок перенесли.\n\nРешения:\n- х"))
+        assertEquals("Участники обсудили релиз.", SummaryLogic.parseSummary("Участники обсудили релиз.\nРешения:\n- х"))
     }
 
-    @Test fun parsesNoneAndEnglish() {
-        val s = SummaryLogic.parse("Summary: They agreed.\nDecisions:\n- none\nTasks:\n- Bob sends the file")
-        assertEquals("They agreed.", s.summary)
-        assertTrue(s.decisions.isEmpty())
-        assertEquals(listOf("Bob sends the file"), s.tasks)
+    @Test fun itemsDropCopiedLinesAndNone() {
+        val t = "- Перенести релиз на пятницу\n- Спикер 1: Предлагаю по очереди.\n• Нанять тестировщика\n- нет\n- Перенести релиз на пятницу\nЗадачи:"
+        assertEquals(listOf("Перенести релиз на пятницу", "Нанять тестировщика"), SummaryLogic.parseItems(t))
+        assertTrue(SummaryLogic.parseItems("- none").isEmpty())
     }
 
-    @Test fun freeTextFallsIntoSummary() {
-        assertEquals("просто текст без формата", SummaryLogic.parse("просто текст без формата").summary)
+    @Test fun itemsAreLimitedToFive() {
+        assertEquals(5, SummaryLogic.parseItems((1..9).joinToString("\n") { "- пункт $it" }).size)
+    }
+
+    @Test fun promptsEndWithPrefill() {
+        for (k in SummaryLogic.Kind.values()) for (ru in listOf(true, false)) {
+            val p = SummaryLogic.finalPrompt(k, "заметки", ru)
+            assertTrue(p.contains("<|im_start|>assistant\n"))
+            assertTrue(!p.endsWith("<|im_end|>\n"))
+        }
     }
 
     @Test fun jsonIsEscaped() {
         val j = SummaryLogic.toJson(SummaryLogic.Summary("a \"b\"", listOf("x"), emptyList()), "ru", 2, 5)
         assertTrue(j.contains("\"summary\": \"a \\\"b\\\"\""))
         assertEquals("видео.summary.json", SummaryLogic.summaryName("видео.mp3"))
+    }
+}
+
+class NotesCleanTest {
+    @Test fun dropsInstructionEchoAndCopiedLines() {
+        val raw = "- Обсудили закупку корма\n- Каждый пункт с новой строки\n- Спикер 2: Отлично.\n- Запиши конспект фрагмента короткими пунктами: что обсуждали, какие решения приняты, кто что должен сделать.\n- Иван готовит отчёт"
+        val clean = SummaryLogic.cleanNotes(raw)
+        assertEquals("- Обсудили закупку корма\n- Каждый пункт с новой строки\n- Иван готовит отчёт", clean)
+    }
+
+    @Test fun itemsDropEchoOfInstructions() {
+        val items = SummaryLogic.parseItems("- Если решений не было, напиши «- нет».\n- Перенести релиз")
+        assertEquals(listOf("Перенести релиз"), items)
     }
 }

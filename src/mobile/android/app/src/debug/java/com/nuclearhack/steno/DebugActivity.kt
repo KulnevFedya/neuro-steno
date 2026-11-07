@@ -11,7 +11,7 @@ import kotlin.concurrent.thread
 /**
  * Прогон для eval:
  *   adb shell am start -n com.nuclearhack.steno/.DebugActivity --es in <файл|каталог>
- * Резюме после каждого файла: --ez summary true. Число спикеров: --ei spk N (по умолчанию авто). По умолчанию in = <externalFilesDir>/in. Результаты: <externalFilesDir>/out/<имя>.json и <имя>.meta.json,
+ * Файл *.json (расшифровка) -> только резюме. Резюме после каждого файла: --ez summary true. Число спикеров: --ei spk N (по умолчанию авто). По умолчанию in = <externalFilesDir>/in. Результаты: <externalFilesDir>/out/<имя>.json и <имя>.meta.json,
  * по окончании создаётся out/DONE.
  */
 class DebugActivity : Activity() {
@@ -30,6 +30,15 @@ class DebugActivity : Activity() {
             Models.await(applicationContext) // как в приложении: модели уже загружены к нажатию «Запуск»
             for (f in files) {
                 try {
+                    if (f.extension == "json") { // готовая расшифровка -> только резюме (быстрая отладка промптов)
+                        val arr = org.json.JSONObject(f.readText()).getJSONArray("transcript")
+                        val us = (0 until arr.length()).map { arr.getJSONObject(it) }.map {
+                            Utterance(it.getString("speaker_id"), it.getLong("start_ms"), it.getLong("end_ms"), it.getString("text"))
+                        }
+                        val sr = Summarizer(applicationContext).run(us)
+                        File(outDir, "${f.nameWithoutExtension}.summary.json").writeText(sr.json)
+                        continue
+                    }
                     val r = Transcriber(applicationContext).run(Uri.fromFile(f), spk)
                     val name = f.nameWithoutExtension
                     File(outDir, "$name.json").writeText(TranscriptJson.build(r.utterances))

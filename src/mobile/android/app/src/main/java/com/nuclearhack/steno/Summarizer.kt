@@ -19,6 +19,7 @@ class Summarizer(private val context: Context) {
         val t0 = SystemClock.elapsedRealtime()
         val gguf = ensureModel(onProgress)
         val ru = SummaryLogic.isRussian(utterances)
+        val sourceTexts = utterances.map { it.text }
         onProgress("load", 0f)
         LlamaBridge.load(gguf.path, SummaryLogic.N_CTX).use { llm ->
             val tLoad = SystemClock.elapsedRealtime()
@@ -26,14 +27,12 @@ class Summarizer(private val context: Context) {
             val chunks = SummaryLogic.chunk(SummaryLogic.lines(utterances, ru), SummaryLogic.CHUNK_TOKENS, llm::tokenCount)
             Log.i(TAG, "summary: ${chunks.size} chunk(s)")
             var notes: String
-            if (chunks.size == 1) {
-                notes = chunks[0]
-            } else {
+            run {
                 val parts = ArrayList<String>()
                 for ((i, c) in chunks.withIndex()) {
                     onProgress("map", i.toFloat() / chunks.size)
                     val tc = SystemClock.elapsedRealtime()
-                    val out = llm.generate(SummaryLogic.mapPrompt(c, ru), SummaryLogic.MAX_NEW_MAP)?.trim().orEmpty()
+                    val out = mapNotes(llm, c, ru)
                     Log.i(TAG, "map ${i + 1}/${chunks.size}: ${SystemClock.elapsedRealtime() - tc} ms, ${out.length} chars")
                     if (out.isNotBlank()) parts.add(out)
                 }
@@ -45,22 +44,34 @@ class Summarizer(private val context: Context) {
                     if (groups.size <= 1) break
                     notes = groups.mapIndexed { i, g ->
                         onProgress("reduce", i.toFloat() / groups.size)
-                        llm.generate(SummaryLogic.mapPrompt(g, ru), SummaryLogic.MAX_NEW_MAP)?.trim().orEmpty()
+                        mapNotes(llm, g, ru)
                     }.filter { it.isNotBlank() }.joinToString("\n")
                     level++
                 }
             }
             onProgress("final", 0f)
             val tf = SystemClock.elapsedRealtime()
-            val text = llm.generate(SummaryLogic.finalPrompt(notes, ru), SummaryLogic.MAX_NEW_FINAL)?.trim().orEmpty()
+            fun ask(kind: SummaryLogic.Kind, maxNew: Int): String {
+                val out = llm.generate(SummaryLogic.finalPrompt(kind, notes, ru), maxNew) ?: ""
+                return (SummaryLogic.prefill(kind, ru) + out).also { Log.d(TAG, "final[$kind]: ${it.take(300).replace("\n", " | ")}") }
+            }
+            val summaryText = SummaryLogic.parseSummary(ask(SummaryLogic.Kind.SUMMARY, 160))
+            onProgress("final", 0.4f)
+            val decisions = SummaryLogic.parseItems(ask(SummaryLogic.Kind.DECISIONS, 140), sourceTexts)
+            onProgress("final", 0.7f)
+            val tasks = SummaryLogic.parseItems(ask(SummaryLogic.Kind.TASKS, 140), sourceTexts)
             Log.i(TAG, "final: ${SystemClock.elapsedRealtime() - tf} ms")
-            val parsed = SummaryLogic.parse(text.ifBlank { notes })
+            val parsed = SummaryLogic.Summary(summaryText.ifBlank { notes.take(400) }, decisions, tasks)
             val ms = SystemClock.elapsedRealtime() - t0
             Log.i(TAG, "summary total $ms ms (chunks=${chunks.size})")
             onProgress("final", 1f)
             return Result(parsed, SummaryLogic.toJson(parsed, if (ru) "ru" else "en", chunks.size, ms), chunks.size, ms)
         }
     }
+
+    /** Конспект одного чанка: в ответ дописываем префилл "-", чтобы получить маркированный список. */
+    private fun mapNotes(llm: LlamaBridge, chunk: String, ru: Boolean): String =
+        llm.generate(SummaryLogic.mapPrompt(chunk, ru), SummaryLogic.MAX_NEW_MAP)?.let { SummaryLogic.cleanNotes("-$it") }.orEmpty()
 
     /** GGUF из assets → filesDir (llama.cpp нужен путь к файлу), с прогрессом копирования. */
     private fun ensureModel(onProgress: (String, Float) -> Unit): File {
