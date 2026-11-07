@@ -86,6 +86,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -382,10 +383,18 @@ private val stages = listOf("Декодирование аудио" to 0f, "Оп
 
 @Composable
 private fun ProcessingScreen(st: UiState) {
+    // Во время обработки — минимум перерисовок: прогресс без анимации (приходит ≤4 раз/с),
+    // ETA пересчитывается раз в секунду.
     val started = remember(st.fileName) { SystemClock.elapsedRealtime() }
-    val progress by animateFloatAsState(st.progress, tween(400), label = "progress")
-    val elapsed = SystemClock.elapsedRealtime() - started
-    val remaining = if (st.progress >= 0.03f && elapsed > 2000) (elapsed * (1 - st.progress) / st.progress).toLong() else null
+    val progress = st.progress
+    val remaining by produceState<Long?>(null, st.fileName) {
+        while (true) {
+            delay(1000)
+            val p = AppState.value.progress
+            val elapsed = SystemClock.elapsedRealtime() - started
+            value = if (p >= 0.03f && elapsed > 2000) (elapsed * (1 - p) / p).toLong() else null
+        }
+    }
     Column(
         Modifier.fillMaxSize().safeDrawingPadding().padding(24.dp),
         verticalArrangement = Arrangement.Center,

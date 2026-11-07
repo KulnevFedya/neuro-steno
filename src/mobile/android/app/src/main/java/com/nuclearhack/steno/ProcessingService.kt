@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.Process
 import android.os.SystemClock
 import android.util.Log
 import androidx.core.app.NotificationCompat
@@ -25,11 +26,15 @@ import java.util.concurrent.Executors
  * Задачи выполняются по одной (однопоточный executor); результат — в [AppState].
  */
 class ProcessingService : Service() {
-    private val worker = Executors.newSingleThreadExecutor { Thread(it, "processing") }
+    // обычный приоритет (не наследуем повышенный приоритет главного потока и не занижаем)
+    private val worker = Executors.newSingleThreadExecutor {
+        Thread({ Process.setThreadPriority(Process.THREAD_PRIORITY_DEFAULT); it.run() }, "processing")
+    }
     private var pending = 0
     private var wakeLock: PowerManager.WakeLock? = null
     private var lastNotify = 0L
     private var lastPercent = -1
+    private var lastUi = 0L
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -90,8 +95,11 @@ class ProcessingService : Service() {
     private fun transcribe(uri: Uri, spk: Int, lang: String) {
         val name = AppState.value.fileName ?: "audio"
         try {
+            lastUi = 0L
             val r = Transcriber(this).run(uri, spk, lang) { p ->
-                AppState.update { it.copy(progress = p) }
+                // UI не чаще 4 раз/с: каждое обновление — перерисовка экрана, а CPU нужен пайплайну
+                val now = SystemClock.elapsedRealtime()
+                if (now - lastUi >= 250) { lastUi = now; AppState.update { it.copy(progress = p) } }
                 progress("Расшифровка: $name", p)
             }
             AppState.update { it.copy(busy = false, progress = 1f, utterances = r.utterances, rtf = r.rtf, detectedLang = r.lang) }
@@ -190,7 +198,7 @@ class ProcessingService : Service() {
     }
 
     private fun notification(title: String, pct: Int) = NotificationCompat.Builder(this, CHANNEL)
-        .setSmallIcon(android.R.drawable.stat_sys_upload)
+        .setSmallIcon(R.drawable.ic_mic) // статичная: анимированная иконка перерисовывает строку состояния
         .setContentTitle(title)
         .setContentText("$pct%")
         .setProgress(100, pct, false)
