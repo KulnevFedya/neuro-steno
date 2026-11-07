@@ -11,13 +11,23 @@ mkdir -p "$MODELS" "$LIBS"
 [ -f "$LIBS/sherpa-onnx.aar" ] || curl -fL -o "$LIBS/sherpa-onnx.aar" "$GH/v2.0.1/sherpa-onnx-2.0.1.aar"
 [ -f "$MODELS/silero_vad.onnx" ] || curl -fL -o "$MODELS/silero_vad.onnx" "$GH/asr-models/silero_vad.onnx"
 
-RU=sherpa-onnx-nemo-ctc-punct-giga-am-v3-russian-2025-12-16
-if [ ! -f "$MODELS/ru/model.int8.onnx" ]; then
+RU=sherpa-onnx-nemo-transducer-punct-giga-am-v3-russian-2025-12-16
+if [ ! -f "$MODELS/ru/encoder.int8.onnx" ]; then
   tmp="$(mktemp -d)"
   curl -fL -o "$tmp/ru.tar.bz2" "$GH/asr-models/$RU.tar.bz2"
   tar -xjf "$tmp/ru.tar.bz2" -C "$tmp"
   mkdir -p "$MODELS/ru"
-  cp "$tmp/$RU/model.int8.onnx" "$tmp/$RU/tokens.txt" "$MODELS/ru/"
+  cp "$tmp/$RU/"{encoder.int8.onnx,decoder.onnx,joiner.onnx,tokens.txt} "$MODELS/ru/"
   rm -rf "$tmp"
 fi
-ls -la "$MODELS" "$MODELS/ru" "$LIBS"
+
+mkdir -p "$MODELS/diar"
+if [ ! -f "$MODELS/diar/seg.int8.onnx" ]; then
+  tmp="$(mktemp -d)"
+  curl -fL -o "$tmp/seg.tar.bz2" "$GH/speaker-segmentation-models/sherpa-onnx-pyannote-segmentation-3-0.tar.bz2"
+  tar -xjf "$tmp/seg.tar.bz2" -C "$tmp"
+  cp "$tmp/sherpa-onnx-pyannote-segmentation-3-0/model.int8.onnx" "$MODELS/diar/seg.int8.onnx"
+  rm -rf "$tmp"
+fi
+[ -f "$MODELS/diar/titanet_small.onnx" ] || curl -fL -o "$MODELS/diar/titanet_small.onnx" "$GH/speaker-recongition-models/nemo_en_titanet_small.onnx"
+ls -la "$MODELS" "$MODELS/ru" "$MODELS/diar" "$LIBS"

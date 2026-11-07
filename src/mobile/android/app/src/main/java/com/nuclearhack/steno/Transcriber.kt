@@ -3,11 +3,18 @@ package com.nuclearhack.steno
 import android.content.Context
 import android.content.res.AssetManager
 import android.net.Uri
+import java.io.File
 import android.os.SystemClock
 import android.util.Log
 import com.k2fsa.sherpa.onnx.FeatureConfig
 import com.k2fsa.sherpa.onnx.OfflineModelConfig
-import com.k2fsa.sherpa.onnx.OfflineNemoEncDecCtcModelConfig
+import com.k2fsa.sherpa.onnx.FastClusteringConfig
+import com.k2fsa.sherpa.onnx.OfflineSpeakerDiarization
+import com.k2fsa.sherpa.onnx.OfflineSpeakerDiarizationConfig
+import com.k2fsa.sherpa.onnx.OfflineSpeakerSegmentationModelConfig
+import com.k2fsa.sherpa.onnx.OfflineSpeakerSegmentationPyannoteModelConfig
+import com.k2fsa.sherpa.onnx.OfflineTransducerModelConfig
+import com.k2fsa.sherpa.onnx.SpeakerEmbeddingExtractorConfig
 import com.k2fsa.sherpa.onnx.OfflineRecognizer
 import com.k2fsa.sherpa.onnx.OfflineRecognizerConfig
 import com.k2fsa.sherpa.onnx.SileroVadModelConfig
@@ -20,62 +27,107 @@ data class TranscribeResult(
     val utterances: List<Utterance>,
     val audioMs: Long,
     val decodeAsrMs: Long,
+    val numSpeakers: Int = 1,
 ) {
     val rtf: Double get() = if (audioMs > 0) decodeAsrMs.toDouble() / audioMs else 0.0
 }
 
-/** Файл → декод 16k mono → Silero VAD → GigaAM v3 (RU, с пунктуацией) → реплики. Диаризации пока нет: все speaker_1. */
+/** Порог кластеризации диаризации (подобран на eval, titanet_small). */
+const val CLUSTER_THRESHOLD = 0.5f
+
+/**
+ * Файл → декод 16k mono (во временный файл) → диаризация (pyannote-3.0 + titanet) → release →
+ * ASR (GigaAM v3 transducer, RU) по сегментам диаризации. speaker_id и таймкоды — из диаризации.
+ * [numSpeakers] <= 0 — авто (порог кластеризации).
+ */
 class Transcriber(private val context: Context) {
 
-    fun run(uri: Uri, onProgress: (Float) -> Unit = {}): TranscribeResult {
+    fun run(uri: Uri, numSpeakers: Int = -1, onProgress: (Float) -> Unit = {}): TranscribeResult {
         val assets = context.assets
         val t0 = SystemClock.elapsedRealtime()
-        val vad = createVad(assets)
-        val rec = createRecognizer(assets)
-        Log.i(TAG, "models loaded in ${SystemClock.elapsedRealtime() - t0} ms")
+        PcmStore(File(context.cacheDir, "pcm_${System.nanoTime()}.raw")).use { pcm ->
+            AudioDecoder.decode(context, uri, { onProgress(it * 0.1f) }) { pcm.append(it) }
+            pcm.finish()
+            val audioMs = pcm.durationMs
+            val tDecode = SystemClock.elapsedRealtime()
+            Log.i(TAG, "decode ${tDecode - t0} ms, audio $audioMs ms")
 
-        val utterances = ArrayList<Utterance>()
+            // 1. диаризация, затем освобождаем и модель, и PCM-массив
+            val raw = diarize(pcm, numSpeakers) { onProgress(0.1f + it * 0.4f) }
+            val tDiar = SystemClock.elapsedRealtime()
+            val segs = Segmenter.build(raw)
+            val ids = Segmenter.speakerIds(segs)
+            Log.i(TAG, "diarization ${tDiar - tDecode} ms, raw=${raw.size} segs=${segs.size} speakers=${ids.size}")
+
+            // 2. ASR по сегментам
+            val utterances = ArrayList<Utterance>()
+            val rec = createRecognizer(assets)
+            var vad: Vad? = null
+            try {
+                for ((i, s) in segs.withIndex()) {
+                    val w = Segmenter.padded(s, audioMs)
+                    val text = if (w.last - w.first <= Segmenter.MAX_ASR_MS) {
+                        recognize(rec, pcm.read(w.first, w.last))
+                    } else {
+                        val v = vad ?: createVad(assets).also { vad = it }
+                        recognizeLong(rec, v, pcm.read(w.first, w.last))
+                    }
+                    if (text.isNotBlank()) utterances.add(Utterance(ids.getValue(s.speaker), s.startMs, s.endMs, text))
+                    onProgress(0.5f + 0.5f * (i + 1) / segs.size)
+                }
+            } finally {
+                vad?.release(); rec.release()
+            }
+            val elapsed = SystemClock.elapsedRealtime() - t0
+            val res = TranscribeResult(utterances, audioMs, elapsed, ids.size)
+            Log.i(TAG, "asr ${SystemClock.elapsedRealtime() - tDiar} ms; total ${elapsed} ms, audio ${audioMs} ms, RTF=${"%.3f".format(res.rtf)}, utterances=${utterances.size}")
+            return res
+        }
+    }
+
+    private fun diarize(pcm: PcmStore, numSpeakers: Int, onProgress: (Float) -> Unit): List<Seg> {
+        val sd = OfflineSpeakerDiarization(
+            context.assets,
+            OfflineSpeakerDiarizationConfig(
+                segmentation = OfflineSpeakerSegmentationModelConfig(
+                    pyannote = OfflineSpeakerSegmentationPyannoteModelConfig(model = "models/diar/seg.int8.onnx"),
+                    numThreads = 4,
+                ),
+                embedding = SpeakerEmbeddingExtractorConfig(model = "models/diar/titanet_small.onnx", numThreads = 4),
+                clustering = FastClusteringConfig(numClusters = if (numSpeakers > 0) numSpeakers else -1, threshold = CLUSTER_THRESHOLD),
+                minDurationOn = 0.2f,
+                minDurationOff = 0.5f,
+            ),
+        )
+        try {
+            val samples = pcm.readAll()
+            // processWithCallback в AAR падает в JNI (лямбда Function3 не находит invoke(IIJ)) — берём process()
+            val res = sd.process(samples)
+            onProgress(1f)
+            return res.sortedBy { it.start }.map { Seg((it.start * 1000).toLong(), (it.end * 1000).toLong(), it.speaker) }
+        } finally {
+            sd.release()
+        }
+    }
+
+    /** Сегмент > 30 с: режем Silero VAD внутри. */
+    private fun recognizeLong(rec: OfflineRecognizer, vad: Vad, x: FloatArray): String {
         val window = vad.config.sileroVadModelConfig.windowSize
-        val pending = FloatArray(window)
-        var pendingN = 0
-
+        val parts = ArrayList<String>()
         fun drain() {
             while (!vad.empty()) {
-                val seg = vad.front()
-                vad.pop()
-                val startMs = seg.start * 1000L / AudioDecoder.TARGET_RATE
-                val endMs = startMs + seg.samples.size * 1000L / AudioDecoder.TARGET_RATE
-                val text = recognize(rec, seg.samples)
-                if (text.isNotBlank()) utterances.add(Utterance("speaker_1", startMs, endMs, text))
+                val seg = vad.front(); vad.pop()
+                recognize(rec, seg.samples).takeIf { it.isNotBlank() }?.let(parts::add)
             }
         }
-
-        val t1 = SystemClock.elapsedRealtime()
-        val audioMs: Long
-        try {
-            audioMs = AudioDecoder.decode(context, uri, onProgress) { chunk ->
-                var off = 0
-                while (off < chunk.size) {
-                    val n = minOf(window - pendingN, chunk.size - off)
-                    System.arraycopy(chunk, off, pending, pendingN, n)
-                    pendingN += n; off += n
-                    if (pendingN == window) {
-                        vad.acceptWaveform(pending.copyOf())
-                        pendingN = 0
-                        drain()
-                    }
-                }
-            }
-            vad.flush()
+        var off = 0
+        while (off + window <= x.size) {
+            vad.acceptWaveform(x.copyOfRange(off, off + window)); off += window
             drain()
-        } finally {
-            vad.release(); rec.release()
         }
-        val elapsed = SystemClock.elapsedRealtime() - t1
-
-        val res = TranscribeResult(utterances, audioMs, elapsed)
-        Log.i(TAG, "decode+vad+asr ${elapsed} ms, audio ${audioMs} ms, RTF=${"%.3f".format(res.rtf)}, utterances=${utterances.size}")
-        return res
+        vad.flush(); drain()
+        vad.reset()
+        return parts.joinToString(" ")
     }
 
     private fun recognize(rec: OfflineRecognizer, samples: FloatArray): String {
@@ -93,10 +145,10 @@ class Transcriber(private val context: Context) {
             sileroVadModelConfig = SileroVadModelConfig(
                 model = "models/silero_vad.onnx",
                 threshold = 0.5f,
-                minSilenceDuration = 0.4f,
+                minSilenceDuration = 0.3f,
                 minSpeechDuration = 0.25f,
                 windowSize = 512,
-                maxSpeechDuration = 20f,
+                maxSpeechDuration = 25f,
             ),
             sampleRate = AudioDecoder.TARGET_RATE,
             numThreads = 1,
@@ -109,8 +161,13 @@ class Transcriber(private val context: Context) {
         OfflineRecognizerConfig(
             featConfig = FeatureConfig(sampleRate = AudioDecoder.TARGET_RATE, featureDim = 80),
             modelConfig = OfflineModelConfig(
-                nemo = OfflineNemoEncDecCtcModelConfig(model = "models/ru/model.int8.onnx"),
+                transducer = OfflineTransducerModelConfig(
+                    encoder = "models/ru/encoder.int8.onnx",
+                    decoder = "models/ru/decoder.onnx",
+                    joiner = "models/ru/joiner.onnx",
+                ),
                 tokens = "models/ru/tokens.txt",
+                modelType = "nemo_transducer",
                 numThreads = 4,
                 provider = "cpu",
             ),

@@ -20,3 +20,7 @@
 - Обработка пока в ViewModel-корутине, не в foreground service (TODO); debug-прогон: DebugActivity (только debug) читает/пишет в getExternalFilesDir (`/sdcard/Android/data/<pkg>/files/{in,out}`), вместо /sdcard/Download/steno — нет прав записи без MediaStore.
 - Ресемплер линейный без ФНЧ — для речи достаточно, при необходимости заменить.
 - Eval: числа→слова (num2words) с обеих сторон в score.py, в приложении не трогаем; venv: .venv-eval. Фаза 1 пересчитана: WER_np RU 0.02–0.07, WER RU 0.14–0.21.
+- ASR RU: transducer-punct лучше CTC-punct (хост, RU 4 файла, диаризационные сегменты): WER с пунктуацией 0.169 vs 0.248, WER_np 0.048 vs 0.052, RTF равны → берём transducer-punct (encoder.int8+decoder+joiner).
+- Диаризация (хост-подбор, DER ru/en 6 файлов): CAM++ en-voxceleb плох (DER 0.2–0.7); CAM++ zh_en advanced и titanet_small хороши; titanet стабильнее по порогу (0.4–0.55) и на шуме → titanet_small (40 МБ), threshold 0.5. DER clean 0.02/0.02/0.115, noisy 0.04/0.045/0.163; с заданным числом спикеров 3spk 0.115/0.129.
+- Диаризация: processWithCallback из sherpa-onnx AAR 2.0.1 падает в JNI (NoSuchMethodError invoke(IIJ)) → используем process() без прогресса внутри.
+- Фаза 2 итог (эмулятор): DER clean 0.02/0.02/0.11, noisy 0.04/0.04/0.16 (3spk_noisy авто=4 спикера), ts_error 31–48 мс (3spk ~410 мс), WER_np RU 0.02–0.07. RTF вырос 0.11→0.43 (диаризация ≈0.2, transducer ASR ≈0.2) — резерв для оптимизации (фаза RTF).

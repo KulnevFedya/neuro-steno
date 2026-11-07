@@ -18,6 +18,7 @@ data class UiState(
     val progress: Float = 0f,
     val utterances: List<Utterance> = emptyList(),
     val rtf: Double? = null,
+    val numSpeakers: Int = -1,
     val error: String? = null,
     val message: String? = null,
 )
@@ -26,13 +27,16 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow(UiState())
     val state: StateFlow<UiState> = _state.asStateFlow()
 
+    fun setNumSpeakers(n: Int) { if (!_state.value.busy) _state.value = _state.value.copy(numSpeakers = n) }
+
     fun transcribe(uri: Uri) {
         if (_state.value.busy) return
         val name = displayName(uri)
-        _state.value = UiState(fileName = name, busy = true)
+        val n = _state.value.numSpeakers
+        _state.value = UiState(fileName = name, busy = true, numSpeakers = n)
         viewModelScope.launch(Dispatchers.Default) {
             try {
-                val r = Transcriber(getApplication()).run(uri) { p -> _state.value = _state.value.copy(progress = p) }
+                val r = Transcriber(getApplication()).run(uri, n) { p -> _state.value = _state.value.copy(progress = p) }
                 _state.value = _state.value.copy(busy = false, progress = 1f, utterances = r.utterances, rtf = r.rtf)
             } catch (t: Throwable) {
                 android.util.Log.e(TAG, "transcribe failed", t)

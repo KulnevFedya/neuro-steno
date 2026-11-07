@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -40,6 +42,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Screen(vm: MainViewModel) {
     val st by vm.state.collectAsStateWithLifecycle()
@@ -62,6 +65,12 @@ private fun Screen(vm: MainViewModel) {
             }
             Button(onClick = { save.launch(vm.exportName()) }, enabled = !st.busy && st.utterances.isNotEmpty()) {
                 Text("Экспорт JSON")
+            }
+        }
+        Text("Число спикеров", style = MaterialTheme.typography.labelMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            for ((label, n) in listOf("Авто" to -1, "2" to 2, "3" to 3, "4" to 4, "5" to 5)) {
+                FilterChip(selected = st.numSpeakers == n, onClick = { vm.setNumSpeakers(n) }, enabled = !st.busy, label = { Text(label) })
             }
         }
         st.fileName?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }

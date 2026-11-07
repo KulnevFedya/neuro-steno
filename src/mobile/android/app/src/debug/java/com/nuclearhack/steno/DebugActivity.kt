@@ -11,7 +11,7 @@ import kotlin.concurrent.thread
 /**
  * Прогон для eval:
  *   adb shell am start -n com.nuclearhack.steno/.DebugActivity --es in <файл|каталог>
- * По умолчанию in = <externalFilesDir>/in. Результаты: <externalFilesDir>/out/<имя>.json и <имя>.meta.json,
+ * Число спикеров: --ei spk N (по умолчанию авто). По умолчанию in = <externalFilesDir>/in. Результаты: <externalFilesDir>/out/<имя>.json и <имя>.meta.json,
  * по окончании создаётся out/DONE.
  */
 class DebugActivity : Activity() {
@@ -24,14 +24,15 @@ class DebugActivity : Activity() {
         File(outDir, "DONE").delete()
         val input = File(intent.getStringExtra("in") ?: File(base, "in").path)
         val files = if (input.isDirectory) (input.listFiles() ?: emptyArray()).filter { it.isFile }.sortedBy { it.name } else listOf(input)
+        val spk = intent.getIntExtra("spk", -1)
         thread {
             for (f in files) {
                 try {
-                    val r = Transcriber(applicationContext).run(Uri.fromFile(f))
+                    val r = Transcriber(applicationContext).run(Uri.fromFile(f), spk)
                     val name = f.nameWithoutExtension
                     File(outDir, "$name.json").writeText(TranscriptJson.build(r.utterances))
                     File(outDir, "$name.meta.json").writeText(
-                        "{\"audio_ms\": ${r.audioMs}, \"proc_ms\": ${r.decodeAsrMs}, \"rtf\": ${r.rtf}}\n"
+                        "{\"speakers\": ${r.numSpeakers}, \"audio_ms\": ${r.audioMs}, \"proc_ms\": ${r.decodeAsrMs}, \"rtf\": ${r.rtf}}\n"
                     )
                 } catch (t: Throwable) {
                     Log.e(TAG, "debug run failed for ${f.name}", t)
