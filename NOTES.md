@@ -15,3 +15,7 @@
 - Конец фазы 1: сравнить GigaAM v3 CTC-punct и transducer-punct (WER, RTF), результат записать сюда.
 - Gradle JDK: JBR Android Studio оказался JDK 25 (не 21) — используем Zulu 17 (org.gradle.java.home в ~/.gradle/gradle.properties, JAVA_HOME при запуске).
 - Gradle JDK: JBR Android Studio оказался JDK 25 (не 21) — используем Zulu 17 (org.gradle.java.home в ~/.gradle/gradle.properties, JAVA_HOME для запуска).
+- Фаза 1 (без диаризации): VAD-сегменты (Silero, minSilence 0.4 с, max 20 с) → GigaAM v3 CTC-punct int8; speaker_1 для всех. Эмулятор arm64: RTF ≈ 0.11, WER_np RU ≈ 0.07–0.16, EN (RU-модель) ≈ 0.35–0.5 — ожидаемо.
+- Модель выдаёт цифры («243», «15%», «7 ноября»), эталон — словами; кандидат на пост-обработку (числа → слова) для WER.
+- Обработка пока в ViewModel-корутине, не в foreground service (TODO); debug-прогон: DebugActivity (только debug) читает/пишет в getExternalFilesDir (`/sdcard/Android/data/<pkg>/files/{in,out}`), вместо /sdcard/Download/steno — нет прав записи без MediaStore.
+- Ресемплер линейный без ФНЧ — для речи достаточно, при необходимости заменить.

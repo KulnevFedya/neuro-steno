@@ -19,10 +19,11 @@ class DebugActivity : Activity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val base = getExternalFilesDir(null)!!
+        File(base, "in").mkdirs()
         val outDir = File(base, "out").apply { mkdirs() }
         File(outDir, "DONE").delete()
         val input = File(intent.getStringExtra("in") ?: File(base, "in").path)
-        val files = if (input.isDirectory) input.listFiles()!!.filter { it.isFile }.sortedBy { it.name } else listOf(input)
+        val files = if (input.isDirectory) (input.listFiles() ?: emptyArray()).filter { it.isFile }.sortedBy { it.name } else listOf(input)
         thread {
             for (f in files) {
                 try {
