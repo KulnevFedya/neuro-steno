@@ -1,0 +1,92 @@
+package com.nuclearhack.steno
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Button
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import android.widget.Toast
+
+class MainActivity : ComponentActivity() {
+    private val vm: MainViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme {
+                Surface(Modifier.fillMaxSize()) { Screen(vm) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Screen(vm: MainViewModel) {
+    val st by vm.state.collectAsStateWithLifecycle()
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) vm.transcribe(uri)
+    }
+    val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) vm.export(uri)
+    }
+    LaunchedEffect(st.message) {
+        st.message?.let { Toast.makeText(ctx, it, Toast.LENGTH_SHORT).show(); vm.messageShown() }
+    }
+
+    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Нейро-стенографист", style = MaterialTheme.typography.headlineSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { pick.launch(arrayOf("audio/*", "video/*", "application/ogg")) }, enabled = !st.busy) {
+                Text("Импорт аудио")
+            }
+            Button(onClick = { save.launch(vm.exportName()) }, enabled = !st.busy && st.utterances.isNotEmpty()) {
+                Text("Экспорт JSON")
+            }
+        }
+        st.fileName?.let { Text(it, style = MaterialTheme.typography.bodyMedium) }
+        if (st.busy) {
+            LinearProgressIndicator(progress = { st.progress }, modifier = Modifier.fillMaxWidth())
+            Text("Расшифровка… ${(st.progress * 100).toInt()}%")
+        }
+        st.rtf?.let { Text("RTF: ${"%.3f".format(it)}", style = MaterialTheme.typography.bodySmall) }
+        st.error?.let { Text("Ошибка: $it", color = MaterialTheme.colorScheme.error) }
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            itemsIndexed(st.utterances) { _, u ->
+                Column {
+                    Text(
+                        "${u.speakerId} · ${fmt(u.startMs)} – ${fmt(u.endMs)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(u.text)
+                }
+            }
+        }
+    }
+}
+
+private fun fmt(ms: Long): String {
+    val s = ms / 1000
+    return "%02d:%02d.%d".format(s / 60, s % 60, (ms % 1000) / 100)
+}

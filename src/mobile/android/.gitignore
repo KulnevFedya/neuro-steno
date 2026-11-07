@@ -1,0 +1,7 @@
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+app/libs/*.aar
+app/src/main/assets/models/

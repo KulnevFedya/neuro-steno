@@ -13,3 +13,5 @@
 - Модели sherpa-onnx читаем из assets через AssetManager; в filesDir копируем только GGUF.
 - Gradle на JDK 21 (Android Studio JBR) через `org.gradle.java.home` в ~/.gradle/gradle.properties.
 - Конец фазы 1: сравнить GigaAM v3 CTC-punct и transducer-punct (WER, RTF), результат записать сюда.
+- Gradle JDK: JBR Android Studio оказался JDK 25 (не 21) — используем Zulu 17 (org.gradle.java.home в ~/.gradle/gradle.properties, JAVA_HOME при запуске).
+- Gradle JDK: JBR Android Studio оказался JDK 25 (не 21) — используем Zulu 17 (org.gradle.java.home в ~/.gradle/gradle.properties, JAVA_HOME для запуска).
