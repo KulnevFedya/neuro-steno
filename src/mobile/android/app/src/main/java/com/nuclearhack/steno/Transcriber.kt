@@ -29,7 +29,7 @@ private const val EXPECTED_DIAR_RTF = 0.15
  */
 class Transcriber(private val context: Context) {
 
-    fun run(uri: Uri, numSpeakers: Int = -1, onProgress: (Float) -> Unit = {}): TranscribeResult {
+    fun run(uri: Uri, numSpeakers: Int = -1, lang: String = "ru", onProgress: (Float) -> Unit = {}): TranscribeResult {
         val t0 = SystemClock.elapsedRealtime()
         Models.await(context)
         val tModels = SystemClock.elapsedRealtime()
@@ -49,7 +49,7 @@ class Transcriber(private val context: Context) {
             Log.i(TAG, "diarization ${tDiar - tDecode} ms, raw=${raw.size} segs=${segs.size} speakers=${ids.size}")
 
             val utterances = ArrayList<Utterance>()
-            val rec = Models.recognizer
+            val rec = Models.recognizer(context, lang)
             for ((i, s) in segs.withIndex()) {
                 val w = Segmenter.padded(s, audioMs)
                 val text = if (!Segmenter.needsVadSplit(w)) {
@@ -62,7 +62,7 @@ class Transcriber(private val context: Context) {
             }
             val elapsed = SystemClock.elapsedRealtime() - t0
             val res = TranscribeResult(utterances, audioMs, elapsed, ids.size)
-            Log.i(TAG, "asr ${SystemClock.elapsedRealtime() - tDiar} ms; total ${elapsed} ms, audio ${audioMs} ms, RTF=${"%.3f".format(res.rtf)}, utterances=${utterances.size}")
+            Log.i(TAG, "asr[$lang] ${SystemClock.elapsedRealtime() - tDiar} ms; total ${elapsed} ms, audio ${audioMs} ms, RTF=${"%.3f".format(res.rtf)}, utterances=${utterances.size}")
             return res
         }
     }

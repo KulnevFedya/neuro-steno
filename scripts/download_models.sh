@@ -21,6 +21,11 @@ if [ ! -f "$MODELS/ru/encoder.int8.onnx" ]; then
   rm -rf "$tmp"
 fi
 
+mkdir -p "$MODELS/en"
+for f in base.en-encoder.int8.onnx base.en-decoder.int8.onnx base.en-tokens.txt; do
+  [ -f "$MODELS/en/$f" ] || curl -fL -o "$MODELS/en/$f" "https://huggingface.co/csukuangfj/sherpa-onnx-whisper-base.en/resolve/main/$f"
+done
+
 mkdir -p "$MODELS/diar"
 if [ ! -f "$MODELS/diar/seg.int8.onnx" ]; then
   tmp="$(mktemp -d)"

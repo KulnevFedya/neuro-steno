@@ -50,14 +50,16 @@ class ProcessingService : Service() {
             ACTION_TRANSCRIBE -> {
                 val uri = intent.data!!
                 val spk = intent.getIntExtra(EXTRA_SPK, -1)
-                ({ transcribe(uri, spk) })
+                val lang = intent.getStringExtra(EXTRA_LANG) ?: "ru"
+                ({ transcribe(uri, spk, lang) })
             }
             ACTION_SUMMARIZE -> ({ summarize() })
             ACTION_BATCH -> {
                 val input = intent.getStringExtra(EXTRA_IN)!!
                 val spk = intent.getIntExtra(EXTRA_SPK, -1)
                 val withSummary = intent.getBooleanExtra(EXTRA_SUMMARY, false)
-                ({ batch(File(input), spk, withSummary) })
+                val lang = intent.getStringExtra(EXTRA_LANG) ?: "ru"
+                ({ batch(File(input), spk, lang, withSummary) })
             }
             else -> null
         }
@@ -85,10 +87,10 @@ class ProcessingService : Service() {
 
     // ---- задачи ----
 
-    private fun transcribe(uri: Uri, spk: Int) {
+    private fun transcribe(uri: Uri, spk: Int, lang: String) {
         val name = AppState.value.fileName ?: "audio"
         try {
-            val r = Transcriber(this).run(uri, spk) { p ->
+            val r = Transcriber(this).run(uri, spk, lang) { p ->
                 AppState.update { it.copy(progress = p) }
                 progress("Расшифровка: $name", p)
             }
@@ -126,7 +128,7 @@ class ProcessingService : Service() {
     }
 
     /** Пакетный прогон для eval: каждый файл → out/<имя>.json + .meta.json; в конце out/DONE. */
-    private fun batch(input: File, spk: Int, withSummary: Boolean) {
+    private fun batch(input: File, spk: Int, lang: String, withSummary: Boolean) {
         val outDir = File(getExternalFilesDir(null), "out").apply { mkdirs() }
         val files = if (input.isDirectory) (input.listFiles() ?: emptyArray()).filter { it.isFile }.sortedBy { it.name } else listOf(input)
         Models.await(this) // как в приложении: модели уже загружены к нажатию «Запуск»
@@ -138,7 +140,7 @@ class ProcessingService : Service() {
                     File(outDir, "${f.nameWithoutExtension}.summary.json").writeText(sr.json)
                     continue
                 }
-                val r = Transcriber(this).run(Uri.fromFile(f), spk) { p ->
+                val r = Transcriber(this).run(Uri.fromFile(f), spk, lang) { p ->
                     progress("Пакет ${i + 1}/${files.size}: ${f.name}", (i + p) / files.size)
                 }
                 val name = f.nameWithoutExtension
@@ -211,6 +213,7 @@ class ProcessingService : Service() {
         const val EXTRA_SPK = "spk"
         const val EXTRA_IN = "in"
         const val EXTRA_SUMMARY = "summary"
+        const val EXTRA_LANG = "lang"
 
         fun start(context: Context, intent: Intent) {
             intent.setClass(context, ProcessingService::class.java)

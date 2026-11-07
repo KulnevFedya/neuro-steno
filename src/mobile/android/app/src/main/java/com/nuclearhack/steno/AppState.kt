@@ -14,6 +14,7 @@ data class UiState(
     val utterances: List<Utterance> = emptyList(),
     val rtf: Double? = null,
     val numSpeakers: Int = -1,
+    val lang: String = "ru",
     val error: String? = null,
     val message: String? = null,
     val summarizing: Boolean = false,

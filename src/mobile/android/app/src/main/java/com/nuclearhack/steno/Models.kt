@@ -13,6 +13,7 @@ import com.k2fsa.sherpa.onnx.OfflineSpeakerDiarizationConfig
 import com.k2fsa.sherpa.onnx.OfflineSpeakerSegmentationModelConfig
 import com.k2fsa.sherpa.onnx.OfflineSpeakerSegmentationPyannoteModelConfig
 import com.k2fsa.sherpa.onnx.OfflineTransducerModelConfig
+import com.k2fsa.sherpa.onnx.OfflineWhisperModelConfig
 import com.k2fsa.sherpa.onnx.SileroVadModelConfig
 import com.k2fsa.sherpa.onnx.SpeakerEmbeddingExtractor
 import com.k2fsa.sherpa.onnx.SpeakerEmbeddingExtractorConfig
@@ -35,6 +36,9 @@ object Models {
     @Volatile private var error: Throwable? = null
     private var sd: OfflineSpeakerDiarization? = null
     private var rec: OfflineRecognizer? = null
+    private var recLang: String? = null
+    /** Язык распознавания: "ru" (GigaAM v3) или "en" (Whisper base.en). */
+    @Volatile var lang: String = "ru"
     private var emb: SpeakerEmbeddingExtractor? = null
     private var vad: Vad? = null
     private val lock = Any()
@@ -67,23 +71,8 @@ object Models {
             ),
         )
         val e = SpeakerEmbeddingExtractor(a, SpeakerEmbeddingExtractorConfig(model = EMB_MODEL, numThreads = NUM_THREADS))
-        val r = OfflineRecognizer(
-            a,
-            OfflineRecognizerConfig(
-                featConfig = FeatureConfig(sampleRate = AudioDecoder.TARGET_RATE, featureDim = 80),
-                modelConfig = OfflineModelConfig(
-                    transducer = OfflineTransducerModelConfig(
-                        encoder = "models/ru/encoder.int8.onnx",
-                        decoder = "models/ru/decoder.onnx",
-                        joiner = "models/ru/joiner.onnx",
-                    ),
-                    tokens = "models/ru/tokens.txt",
-                    modelType = "nemo_transducer",
-                    numThreads = NUM_THREADS,
-                    provider = "cpu",
-                ),
-            ),
-        )
+        val l = lang
+        val r = buildRecognizer(context, l)
         val v = Vad(
             a,
             VadModelConfig(
@@ -100,7 +89,7 @@ object Models {
                 provider = "cpu",
             ),
         )
-        synchronized(lock) { sd = d; emb = e; rec = r; vad = v }
+        synchronized(lock) { sd = d; emb = e; rec = r; recLang = l; vad = v }
         Log.i(TAG, "models loaded in ${SystemClock.elapsedRealtime() - t0} ms")
     }
 
@@ -111,9 +100,62 @@ object Models {
         error?.let { throw IllegalStateException("model load failed: ${it.message}", it) }
     }
 
+    /** Распознаватель нужного языка; при смене языка старый освобождается (вместе не держим — память). */
+    fun recognizer(context: Context, l: String): OfflineRecognizer {
+        synchronized(lock) {
+            rec?.let { if (recLang == l) return it }
+            val t0 = SystemClock.elapsedRealtime()
+            rec?.release(); rec = null
+            return buildRecognizer(context.applicationContext, l).also {
+                rec = it; recLang = l
+                Log.i(TAG, "recognizer $l loaded in ${SystemClock.elapsedRealtime() - t0} ms")
+            }
+        }
+    }
+
+    /** Смена языка в UI: модель подгружается в фоне, к нажатию «Импорт» обычно уже готова. */
+    fun switchLang(context: Context, l: String) {
+        lang = l
+        val app = context.applicationContext
+        Thread({
+            try { loader?.join(); if (sd != null) recognizer(app, l) } catch (t: Throwable) { Log.e(TAG, "recognizer load failed", t) }
+        }, "lang-loader").start()
+    }
+
+    private fun buildRecognizer(context: Context, l: String): OfflineRecognizer {
+        val model = if (l == "en") OfflineModelConfig(
+            whisper = OfflineWhisperModelConfig(
+                encoder = "models/en/base.en-encoder.int8.onnx",
+                decoder = "models/en/base.en-decoder.int8.onnx",
+                language = "en",
+                task = "transcribe",
+            ),
+            tokens = "models/en/base.en-tokens.txt",
+            modelType = "whisper",
+            numThreads = NUM_THREADS,
+            provider = "cpu",
+        ) else OfflineModelConfig(
+            transducer = OfflineTransducerModelConfig(
+                encoder = "models/ru/encoder.int8.onnx",
+                decoder = "models/ru/decoder.onnx",
+                joiner = "models/ru/joiner.onnx",
+            ),
+            tokens = "models/ru/tokens.txt",
+            modelType = "nemo_transducer",
+            numThreads = NUM_THREADS,
+            provider = "cpu",
+        )
+        return OfflineRecognizer(
+            context.assets,
+            OfflineRecognizerConfig(
+                featConfig = FeatureConfig(sampleRate = AudioDecoder.TARGET_RATE, featureDim = 80),
+                modelConfig = model,
+            ),
+        )
+    }
+
     val diarizer get() = sd!!
     val embedder get() = emb!!
-    val recognizer get() = rec!!
     val vadModel get() = vad!!
 
     fun setClusters(numClusters: Int) {
@@ -126,7 +168,7 @@ object Models {
         loader?.join()
         synchronized(lock) {
             sd?.release(); emb?.release(); rec?.release(); vad?.release()
-            sd = null; emb = null; rec = null; vad = null
+            sd = null; emb = null; rec = null; recLang = null; vad = null
             loader = null
         }
         Log.i(TAG, "models released")

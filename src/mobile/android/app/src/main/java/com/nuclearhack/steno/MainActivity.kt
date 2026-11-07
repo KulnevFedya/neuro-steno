@@ -101,6 +101,12 @@ private fun Screen(vm: MainViewModel) {
                 }
             }
         }
+        Text("Язык записи", style = MaterialTheme.typography.labelMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            for ((label, l) in listOf("Русский" to "ru", "English" to "en")) {
+                FilterChip(selected = st.lang == l, onClick = { vm.setLang(l) }, enabled = !st.working, label = { Text(label) })
+            }
+        }
         Text("Число спикеров", style = MaterialTheme.typography.labelMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             for ((label, n) in listOf("Авто" to -1, "2" to 2, "3" to 3, "4" to 4, "5" to 5)) {

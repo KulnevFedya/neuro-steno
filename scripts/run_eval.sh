@@ -5,6 +5,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PKG=com.nuclearhack.steno
 AUDIO="${AUDIO_DIR:-$ROOT/test_audio}"   # AUDIO_DIR/REF_DIR/MEM=1: длинные файлы и пик памяти
 REF="${REF_DIR:-$ROOT/eval/ref}"
+GLOB="${GLOB:-*.wav}"             # GLOB='en_*.wav' EVAL_LANG=en — английские файлы
+EVAL_LANG="${EVAL_LANG:-ru}"
 D=/sdcard/Android/data/$PKG/files
 VARIANT="${VARIANT:-release}"   # VARIANT=debug — отладочная сборка
 APK="$ROOT/src/mobile/android/app/build/outputs/apk/$VARIANT/app-$VARIANT.apk"
@@ -14,9 +16,9 @@ adb shell am force-stop $PKG
 adb shell am start -n $PKG/.DebugActivity >/dev/null; sleep 4
 adb shell am force-stop $PKG
 adb shell "rm -f $D/in/*; rm -rf $D/out/*"
-adb push "$AUDIO"/*.wav $D/in/ | tail -1
+adb push "$AUDIO"/$GLOB $D/in/ | tail -1
 adb logcat -c
-adb shell am start -n $PKG/.DebugActivity >/dev/null
+adb shell am start -n $PKG/.DebugActivity --es lang "$EVAL_LANG" >/dev/null
 sleep 5
 if [ "${MEM:-0}" = 1 ]; then  # пик PSS приложения каждые 5 с -> eval/mem.log
   ( while :; do echo "$(date +%T) $(adb shell dumpsys meminfo $PKG | grep -E 'TOTAL PSS|TOTAL:' | head -1 | tr -s ' ')"; sleep 5; done ) > "$ROOT/eval/mem.log" 2>&1 &

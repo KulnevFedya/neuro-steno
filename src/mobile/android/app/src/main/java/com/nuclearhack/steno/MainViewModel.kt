@@ -18,14 +18,21 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     fun setNumSpeakers(n: Int) { if (!AppState.value.busy) AppState.update { it.copy(numSpeakers = n) } }
 
+    fun setLang(l: String) {
+        if (AppState.value.working || AppState.value.lang == l) return
+        AppState.update { it.copy(lang = l) }
+        Models.switchLang(getApplication(), l)
+    }
+
     fun transcribe(uri: Uri) {
         if (AppState.value.working) return
         // доступ к файлу нужен и сервису, и плееру после перезапуска
         runCatching { getApplication<Application>().contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
         val name = displayName(uri)
-        AppState.update { UiState(fileName = name, audioUri = uri, busy = true, numSpeakers = it.numSpeakers) }
+        AppState.update { UiState(fileName = name, audioUri = uri, busy = true, numSpeakers = it.numSpeakers, lang = it.lang) }
         ProcessingService.start(getApplication(), Intent(ProcessingService.ACTION_TRANSCRIBE, uri)
-            .putExtra(ProcessingService.EXTRA_SPK, AppState.value.numSpeakers))
+            .putExtra(ProcessingService.EXTRA_SPK, AppState.value.numSpeakers)
+            .putExtra(ProcessingService.EXTRA_LANG, AppState.value.lang))
     }
 
     fun summarize() {
