@@ -54,3 +54,4 @@ local.properties
 .cxx/
 .claude/settings.local.json
 .venv-eval/
+test_audio_long/

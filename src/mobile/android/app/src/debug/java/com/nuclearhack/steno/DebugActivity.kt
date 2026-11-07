@@ -11,7 +11,7 @@ import kotlin.concurrent.thread
 /**
  * Прогон для eval:
  *   adb shell am start -n com.nuclearhack.steno/.DebugActivity --es in <файл|каталог>
- * Число спикеров: --ei spk N (по умолчанию авто). По умолчанию in = <externalFilesDir>/in. Результаты: <externalFilesDir>/out/<имя>.json и <имя>.meta.json,
+ * Резюме после каждого файла: --ez summary true. Число спикеров: --ei spk N (по умолчанию авто). По умолчанию in = <externalFilesDir>/in. Результаты: <externalFilesDir>/out/<имя>.json и <имя>.meta.json,
  * по окончании создаётся out/DONE.
  */
 class DebugActivity : Activity() {
@@ -33,6 +33,11 @@ class DebugActivity : Activity() {
                     val r = Transcriber(applicationContext).run(Uri.fromFile(f), spk)
                     val name = f.nameWithoutExtension
                     File(outDir, "$name.json").writeText(TranscriptJson.build(r.utterances))
+                    if (intent.getBooleanExtra("summary", false)) {
+                        val sr = Summarizer(applicationContext).run(r.utterances)
+                        File(outDir, "$name.summary.json").writeText(sr.json)
+                        Models.await(applicationContext) // вернуть модели для следующего файла
+                    }
                     File(outDir, "$name.meta.json").writeText(
                         "{\"speakers\": ${r.numSpeakers}, \"audio_ms\": ${r.audioMs}, \"proc_ms\": ${r.decodeAsrMs}, \"rtf\": ${r.rtf}}\n"
                     )

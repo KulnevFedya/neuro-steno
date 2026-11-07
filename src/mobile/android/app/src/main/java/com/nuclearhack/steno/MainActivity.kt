@@ -53,6 +53,9 @@ private fun Screen(vm: MainViewModel) {
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
         if (uri != null) vm.export(uri)
     }
+    val saveSummary = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) vm.exportSummary(uri)
+    }
     LaunchedEffect(st.message) {
         st.message?.let { Toast.makeText(ctx, it, Toast.LENGTH_SHORT).show(); vm.messageShown() }
     }
@@ -60,11 +63,44 @@ private fun Screen(vm: MainViewModel) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Нейро-стенографист", style = MaterialTheme.typography.headlineSmall)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = { pick.launch(arrayOf("audio/*", "video/*", "application/ogg")) }, enabled = !st.busy) {
+            Button(onClick = { pick.launch(arrayOf("audio/*", "video/*", "application/ogg")) }, enabled = !st.busy && !st.summarizing) {
                 Text("Импорт аудио")
             }
             Button(onClick = { save.launch(vm.exportName()) }, enabled = !st.busy && st.utterances.isNotEmpty()) {
                 Text("Экспорт JSON")
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { vm.summarize() }, enabled = !st.busy && !st.summarizing && st.utterances.isNotEmpty()) {
+                Text("Резюме")
+            }
+            Button(onClick = { saveSummary.launch(vm.summaryName()) }, enabled = st.summaryJson != null) {
+                Text("Экспорт резюме")
+            }
+        }
+        if (st.summarizing) {
+            val label = when (st.summaryStage) {
+                "copy" -> "Копирование модели (первый запуск)"
+                "load" -> "Загрузка модели"
+                "map" -> "Конспект частей"
+                "reduce" -> "Сжатие конспектов"
+                else -> "Итоги"
+            }
+            LinearProgressIndicator(progress = { st.summaryProgress }, modifier = Modifier.fillMaxWidth())
+            Text("$label… ${(st.summaryProgress * 100).toInt()}%")
+        }
+        st.summary?.let { s ->
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("Резюме", style = MaterialTheme.typography.titleMedium)
+                Text(s.summary)
+                if (s.decisions.isNotEmpty()) {
+                    Text("Решения", style = MaterialTheme.typography.labelLarge)
+                    s.decisions.forEach { Text("• $it") }
+                }
+                if (s.tasks.isNotEmpty()) {
+                    Text("Задачи", style = MaterialTheme.typography.labelLarge)
+                    s.tasks.forEach { Text("• $it") }
+                }
             }
         }
         Text("Число спикеров", style = MaterialTheme.typography.labelMedium)

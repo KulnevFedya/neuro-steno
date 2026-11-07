@@ -54,4 +54,29 @@ object Segmenter {
         for (s in segs) if (s.speaker !in m) m[s.speaker] = "speaker_${m.size + 1}"
         return m
     }
+
+    fun needsVadSplit(w: LongRange) = w.last - w.first > MAX_ASR_MS
+
+    /** Абстракция над Silero VAD (в тестах — заглушка). */
+    interface SpeechDetector {
+        fun accept(window: FloatArray)
+        /** Забирает готовые речевые фрагменты. */
+        fun drain(): List<FloatArray>
+        fun flush()
+        fun reset()
+    }
+
+    /** Сегмент > 30 с: прогоняем окнами через VAD, каждый речевой фрагмент — в [recognize]. */
+    fun recognizeLong(x: FloatArray, window: Int, vad: SpeechDetector, recognize: (FloatArray) -> String): String {
+        val parts = ArrayList<String>()
+        fun drain() { for (f in vad.drain()) recognize(f).takeIf { it.isNotBlank() }?.let(parts::add) }
+        var off = 0
+        while (off + window <= x.size) {
+            vad.accept(x.copyOfRange(off, off + window)); off += window
+            drain()
+        }
+        vad.flush(); drain()
+        vad.reset()
+        return parts.joinToString(" ")
+    }
 }

@@ -30,4 +30,7 @@ if [ ! -f "$MODELS/diar/seg.int8.onnx" ]; then
   rm -rf "$tmp"
 fi
 [ -f "$MODELS/diar/titanet_small.onnx" ] || curl -fL -o "$MODELS/diar/titanet_small.onnx" "$GH/speaker-recongition-models/nemo_en_titanet_small.onnx"
+mkdir -p "$MODELS/llm"
+[ -f "$MODELS/llm/qwen2.5-0.5b-instruct-q4_0.gguf" ] || curl -fL -o "$MODELS/llm/qwen2.5-0.5b-instruct-q4_0.gguf" \
+  https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/resolve/main/qwen2.5-0.5b-instruct-q4_0.gguf
 ls -la "$MODELS" "$MODELS/ru" "$MODELS/diar" "$LIBS"

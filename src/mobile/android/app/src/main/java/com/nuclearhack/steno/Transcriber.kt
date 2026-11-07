@@ -52,7 +52,7 @@ class Transcriber(private val context: Context) {
             val rec = Models.recognizer
             for ((i, s) in segs.withIndex()) {
                 val w = Segmenter.padded(s, audioMs)
-                val text = if (w.last - w.first <= Segmenter.MAX_ASR_MS) {
+                val text = if (!Segmenter.needsVadSplit(w)) {
                     recognize(rec, pcm.read(w.first, w.last))
                 } else {
                     recognizeLong(rec, Models.vadModel, pcm.read(w.first, w.last))
@@ -119,22 +119,17 @@ class Transcriber(private val context: Context) {
 
     /** Сегмент > 30 с: режем Silero VAD внутри. */
     private fun recognizeLong(rec: OfflineRecognizer, vad: Vad, x: FloatArray): String {
-        val window = vad.config.sileroVadModelConfig.windowSize
-        val parts = ArrayList<String>()
-        fun drain() {
-            while (!vad.empty()) {
-                val seg = vad.front(); vad.pop()
-                recognize(rec, seg.samples).takeIf { it.isNotBlank() }?.let(parts::add)
+        val det = object : Segmenter.SpeechDetector {
+            override fun accept(window: FloatArray) = vad.acceptWaveform(window)
+            override fun drain(): List<FloatArray> {
+                val r = ArrayList<FloatArray>()
+                while (!vad.empty()) { r.add(vad.front().samples); vad.pop() }
+                return r
             }
+            override fun flush() = vad.flush()
+            override fun reset() = vad.reset()
         }
-        var off = 0
-        while (off + window <= x.size) {
-            vad.acceptWaveform(x.copyOfRange(off, off + window)); off += window
-            drain()
-        }
-        vad.flush(); drain()
-        vad.reset()
-        return parts.joinToString(" ")
+        return Segmenter.recognizeLong(x, vad.config.sileroVadModelConfig.windowSize, det) { recognize(rec, it) }
     }
 
     private fun recognize(rec: OfflineRecognizer, samples: FloatArray): String {

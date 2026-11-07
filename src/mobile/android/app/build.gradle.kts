@@ -15,6 +15,12 @@ android {
         versionCode = 1
         versionName = "0.1"
         ndk { abiFilters += "arm64-v8a" }
+        externalNativeBuild {
+            cmake {
+                arguments += "-DCMAKE_BUILD_TYPE=Release"
+                cppFlags += "-O3"
+            }
+        }
     }
 
     buildTypes {
@@ -28,6 +34,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
+    externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "4.1.2" } }
     buildFeatures { compose = true }
     androidResources { noCompress += listOf("onnx", "gguf", "txt") }
     packaging { jniLibs { useLegacyPackaging = false } }
