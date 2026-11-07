@@ -35,6 +35,13 @@ object TranscriptJson {
         return sb.toString()
     }
 
+    fun parse(json: String): List<Utterance> {
+        val arr = org.json.JSONObject(json).getJSONArray("transcript")
+        return (0 until arr.length()).map { arr.getJSONObject(it) }.map {
+            Utterance(it.getString("speaker_id"), it.getLong("start_ms"), it.getLong("end_ms"), it.getString("text"))
+        }
+    }
+
     /** Имя экспортируемого файла: <имя_аудио>.json */
     fun exportName(audioName: String): String {
         val base = audioName.substringBeforeLast('.', audioName).ifBlank { "transcript" }

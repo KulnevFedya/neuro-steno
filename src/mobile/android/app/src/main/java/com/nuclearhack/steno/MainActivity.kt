@@ -34,6 +34,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // уведомление с прогрессом обработки (Android 13+ спрашивает разрешение)
+        if (android.os.Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 1)
         setContent {
             MaterialTheme {
                 Surface(Modifier.fillMaxSize()) { Screen(vm) }
@@ -79,13 +83,7 @@ private fun Screen(vm: MainViewModel) {
             }
         }
         if (st.summarizing) {
-            val label = when (st.summaryStage) {
-                "copy" -> "Копирование модели (первый запуск)"
-                "load" -> "Загрузка модели"
-                "map" -> "Конспект частей"
-                "reduce" -> "Сжатие конспектов"
-                else -> "Итоги"
-            }
+            val label = ProcessingService.summaryStageLabel(st.summaryStage).replaceFirstChar { it.uppercase() }
             LinearProgressIndicator(progress = { st.summaryProgress }, modifier = Modifier.fillMaxWidth())
             Text("$label… ${(st.summaryProgress * 100).toInt()}%")
         }
