@@ -38,6 +38,7 @@ class Transcriber(private val context: Context) {
             AudioDecoder.decode(context, uri, { onProgress(it * 0.1f) }) { pcm.append(it) }
             pcm.finish()
             val audioMs = pcm.durationMs
+            if (audioMs < 500) throw UserFacingException("В файле нет звука или запись слишком короткая")
             val tDecode = SystemClock.elapsedRealtime()
             Log.i(TAG, "decode ${tDecode - tModels} ms, audio $audioMs ms")
 

@@ -15,6 +15,8 @@ data class UiState(
     val rtf: Double? = null,
     val numSpeakers: Int = -1,
     val lang: String = "ru",
+    /** Пользовательские имена спикеров: только UI и TXT, в JSON остаётся speaker_id. */
+    val speakerNames: Map<String, String> = emptyMap(),
     val error: String? = null,
     val message: String? = null,
     val summarizing: Boolean = false,

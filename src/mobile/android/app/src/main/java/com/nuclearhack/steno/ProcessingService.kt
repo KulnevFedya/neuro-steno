@@ -232,13 +232,13 @@ class ProcessingService : Service() {
         fun userError(t: Throwable): String {
             val m = t.message.orEmpty()
             return when {
+                t is UserFacingException -> m
                 t is OutOfMemoryError -> "Недостаточно памяти для обработки файла"
-                m.contains("аудиодорожки") -> m
                 t is java.io.FileNotFoundException || t is SecurityException -> "Не удалось открыть файл (нет доступа или файл удалён)"
                 t is java.io.IOException || t is IllegalArgumentException || t is IllegalStateException && m.contains("codec", true) ||
                     t is android.media.MediaCodec.CodecException ->
-                    "Файл повреждён или формат не поддерживается${if (m.isNotBlank()) " ($m)" else ""}"
-                else -> m.ifBlank { t.toString() }
+                    "Файл повреждён или формат не поддерживается"
+                else -> "Не удалось обработать файл: ${m.ifBlank { t.javaClass.simpleName }}"
             }
         }
     }

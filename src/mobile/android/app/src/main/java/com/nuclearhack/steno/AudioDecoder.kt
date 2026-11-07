@@ -22,7 +22,13 @@ object AudioDecoder {
         onChunk: (FloatArray) -> Unit,
     ): Long {
         val extractor = MediaExtractor()
-        extractor.setDataSource(context, uri, null)
+        try {
+            extractor.setDataSource(context, uri, null)
+        } catch (t: Throwable) {
+            extractor.release()
+            if (t is SecurityException || t is java.io.FileNotFoundException) throw UserFacingException("Нет доступа к файлу или файл удалён")
+            throw UserFacingException("Не удалось прочитать файл: он повреждён или формат не поддерживается")
+        }
         var track = -1
         var format: MediaFormat? = null
         for (i in 0 until extractor.trackCount) {
@@ -31,14 +37,17 @@ object AudioDecoder {
                 track = i; format = f; break
             }
         }
-        require(track >= 0 && format != null) { "В файле нет аудиодорожки" }
+        if (track < 0 || format == null) { extractor.release(); throw UserFacingException("В файле нет аудиодорожки") }
         extractor.selectTrack(track)
         val mime = format.getString(MediaFormat.KEY_MIME)!!
         val durationUs = if (format.containsKey(MediaFormat.KEY_DURATION)) format.getLong(MediaFormat.KEY_DURATION) else 0L
 
-        val codec = MediaCodec.createDecoderByType(mime)
-        codec.configure(format, null, null, 0)
-        codec.start()
+        val codec = try {
+            MediaCodec.createDecoderByType(mime).apply { configure(format, null, null, 0); start() }
+        } catch (t: Throwable) {
+            extractor.release()
+            throw UserFacingException("Аудиоформат $mime не поддерживается устройством")
+        }
 
         var rate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE)
         var channels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT)
@@ -65,7 +74,10 @@ object AudioDecoder {
                         }
                     }
                 }
-                val out = codec.dequeueOutputBuffer(info, 10_000)
+                val out = try { codec.dequeueOutputBuffer(info, 10_000) } catch (e: IllegalStateException) {
+                    if (totalOut > 0) break // повреждённый хвост: оставляем то, что успели декодировать
+                    throw UserFacingException("Файл повреждён: не удалось декодировать аудио")
+                }
                 when {
                     out == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
                         val f = codec.outputFormat
