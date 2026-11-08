@@ -35,7 +35,7 @@ examples/output/*
 !examples/output/.gitkeep
 
 # Keep large demo media outside Git unless intentionally included
-artifacts/demo/*.mp4
+#artifacts/demo/*.mp4
 artifacts/demo/*.mov
 artifacts/demo/*.mkv
 artifacts/demo/*.wav
