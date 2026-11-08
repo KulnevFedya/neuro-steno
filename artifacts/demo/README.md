@@ -1,6 +1,6 @@
 # Материалы демонстрации
 
-- **Видео демонстрации (1:41, 720 по высоте, H.264):** [demo.mp4](demo.mp4) — [открыть на GitHub](https://github.com/zzzatoox/neuro-steno/blob/master/artifacts/demo/demo.mp4)
+- **Видео демонстрации (1:41, 720×1600, H.264):** [demo.mp4](demo.mp4) — [открыть на GitHub](https://github.com/zzzatoox/neuro-steno/blob/master/artifacts/demo/demo.mp4)
 - GIF для README (13 с): [docs/img/demo.gif](../../docs/img/demo.gif)
 - Скриншоты: [docs/img/](../../docs/img/)
 
